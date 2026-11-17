@@ -90,3 +90,11 @@ Cuentas para cada jugador, fotos reales, estadísticas de minutos o cambios de p
 - El `SELECT name FROM sqlite_master WHERE type='table' ORDER BY name` confirmó las cinco tablas de dominio: `seasons`, `players`, `matches`, `match_players`, `audit_events`.
 - **Alcance de la verificación:** solo estructura de `martes-fc-preview`. No se han verificado endpoint Worker, datos de jugador, Access, backups o la D1 de producción.
 - **Siguiente control:** resolver Worker Preview y comprobar `GET /api/public/snapshot` antes de promocionar a producción.
+
+### Bloqueo de Cloudflare Preview (17-11-2026)
+
+- El build remoto de Preview falló **antes de compilar código**: Workers Builds ejecuta `npm run build` en la raíz `/opt/buildhome/repo`, pero el `package.json` está en `web/`; error `ENOENT` aportado por el propietario.
+- No implica un fallo en la migración D1 ya aplicada en PREVIEW ni en los tests de GitHub. **No declarar RF-020/030 verificados end-to-end**.
+- La corrección depende de Settings → Build en Cloudflare: root `/`, Build command `cd web && npm ci --no-audit --no-fund && npm run build` en las configuraciones pertinentes, Preview command `npx wrangler preview`; guardar y reintentar.
+- Evidencia de cierre: logs de Preview con compilación Vite satisfactoria, URL aislada y `GET /api/public/snapshot` funcionando con la base `martes-fc-preview`.
+- Procedimiento detallado: [Despliegue Cloudflare](DESPLIEGUE_CLOUDFLARE.md). La producción v0.1.1 se mantiene inalterada.
