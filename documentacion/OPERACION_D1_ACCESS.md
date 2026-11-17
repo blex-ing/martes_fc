@@ -1,36 +1,79 @@
 # Operación Cloudflare D1 + Access — MARTES FC
 
-## Paso 0 · Requisitos externos
-La integración GitHub permite editar el código pero **no administra la cuenta Cloudflare**. Crear recursos en el dashboard con el propietario antes de publicar v0.2.0:
-- D1 `martes-fc-prod` y D1 `martes-fc-preview`, anotar los UUID reales.
-- Crear una aplicación **Cloudflare Access** de tipo Self-hosted que cubra exclusivamente `/api/admin/*` en el dominio de producción y previews pertinentes, restringida al correo autorizado; conservar AUD y dominio `https://TU-EQUIPO.cloudflareaccess.com`.
-- Configurar las variables de Worker `POLICY_AUD`, `TEAM_DOMAIN` y `ADMIN_EMAIL`; nunca en Git, capturas públicas o prefijos `VITE_`.
+## Estado de los recursos (17-11-2026)
+**Confirmados por captura del dashboard del propietario, no por conexión API:**
+- D1 producción `martes-fc-prod`: `cd88771a-bfce-4b6b-873f-61066407a7db`
+- D1 pruebas `martes-fc-preview`: `8242fd69-84d4-4630-b4c2-7b6d29550aeb`
 
-## Paso 1 · Configuración Wrangler (después de crear D1)
-Mantener `wrangler.jsonc` con Worker Static Assets y `main: ./worker/index.ts`. Añadir, sustituyendo solo por IDs reales:
+La conexión a D1 está **declarada en Git**, pero la captura no acredita que el esquema SQL se haya aplicado ni que haya una sesión administrativa operativa. Nada de esto autoriza publicar aún en `master`.
 
+## Paso 0 · Requisito externo todavía pendiente: Cloudflare Access
+La integración GitHub **no administra la cuenta Cloudflare**.
+- Crear la aplicación **Cloudflare Access Self-hosted** para proteger exclusivamente `/api/admin/*`, en la URL real de producción y, si procede, en las de previews, con correo autorizado.
+- Registrar `TEAM_DOMAIN` como `https://<equipo>.cloudflareaccess.com`, `POLICY_AUD` (AUD del Access App) y `ADMIN_EMAIL` en variables/secrets del Worker **en el dashboard**, no en `wrangler.jsonc` ni `VITE_*`.
+- Las previews no heredan automáticamente todas las variables de producción: configurar una identidad de prueba con permisos mínimos para ellas o mantener las escrituras completamente bloqueadas.
+- El código valida la firma RS256 del JWT, audiencia, issuer y correo. Sin valores válidos debe rechazar las modificaciones.
+
+## Paso 1 · Configuración Wrangler (hecha en la feature)
+Archivo `wrangler.jsonc`:
 ```json
 "d1_databases": [
-  {"binding":"DB","database_name":"martes-fc-prod","database_id":"UUID-REAL-PROD","migrations_dir":"migrations"}
+  {
+    "binding": "DB",
+    "database_name": "martes-fc-prod",
+    "database_id": "cd88771a-bfce-4b6b-873f-61066407a7db",
+    "preview_database_id": "8242fd69-84d4-4630-b4c2-7b6d29550aeb",
+    "migrations_dir": "migrations"
+  }
 ],
 "previews": {
   "d1_databases": [
-    {"binding":"DB","database_name":"martes-fc-preview","database_id":"UUID-REAL-PREVIEW"}
+    {
+      "binding": "DB",
+      "database_name": "martes-fc-preview",
+      "database_id": "8242fd69-84d4-4630-b4c2-7b6d29550aeb"
+    }
   ]
 }
 ```
-**OJO**: la vinculación de previews y la de producción deben apuntar a UUID distintos. Nunca usar la D1 de producción en previews.
+El `preview_database_id` también protege las sesiones `wrangler dev --remote`; el campo **`previews.d1_databases`** separa las Worker Previews publicadas. `DB` es el nombre del binding para ambas, **pero los UUID son distintos**.
 
-## Paso 2 · Migraciones
-En un equipo con Wrangler instalado y login a esa cuenta:
-```sh
-npx wrangler d1 migrations apply martes-fc-prod --local
-# PREVIEW: usar configuración wrangler.preview-migrations.jsonc con UUID real
-npx wrangler d1 migrations apply martes-fc-preview --remote --config wrangler.preview-migrations.jsonc
-# BACKUP antes de tocar producción (ver comando vigente en documentación oficial)
-npx wrangler d1 migrations apply martes-fc-prod --remote
+Archivo `wrangler.preview-migrations.jsonc`:
+```json
+{
+  "d1_databases": [
+    {
+      "binding": "PREVIEW_DB",
+      "database_name": "martes-fc-preview",
+      "database_id": "8242fd69-84d4-4630-b4c2-7b6d29550aeb",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
 ```
-No ejecutar en remoto sin comprobar nombre, UUID, entorno y respaldo. Las migraciones no introducen datos personales: solo una temporada 2026.
+
+## Paso 2 · Aplicar migraciones primero en pruebas
+**Todavía NO aplicadas.** En una terminal autenticada de Wrangler, situada en la raíz del repositorio y con una rama que tenga los bindings:
+```sh
+# 1. Ver qué migraciones faltan en la D1 de PREVIEW
+npx wrangler d1 migrations list PREVIEW_DB --remote --config wrangler.preview-migrations.jsonc
+
+# 2. Aplicarlas SOLAMENTE a PREVIEW
+npx wrangler d1 migrations apply PREVIEW_DB --remote --config wrangler.preview-migrations.jsonc
+
+# 3. Comprobar que existen las tablas; únicamente preview
+npx wrangler d1 execute PREVIEW_DB --remote --config wrangler.preview-migrations.jsonc --command "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+
+# 4. Respaldar antes de aplicar en producción (si hay datos; export fuera del repo)
+npx wrangler d1 export martes-fc-prod --remote --output martes-fc-prod-backup.sql
+
+# 5. Aplicar la versión aprobada a producción cuando preview y seguridad funcionen
+npx wrangler d1 migrations list DB --remote
+npx wrangler d1 migrations apply DB --remote
+```
+`DB` se refiere al binding de producción; `PREVIEW_DB` al binding de migraciones de preview. Las migraciones de producción **no** deben ejecutarse automáticamente desde un PR o preview. Las migraciones incluyen únicamente esquema y temporada ficticia 2026; nunca contactos ni resultados reales.
+
+**Importante:** conservar el backup fuera de GitHub. Una D1 recién creada no tiene tablas de la aplicación hasta aplicar `0001_initial.sql`. El código sin tablas puede devolver `503 database_unavailable` en `GET /api/public/snapshot`.
 
 ## Paso 3 · Autenticación
 Proteger **solo** el espacio `/api/admin/*`, manteniendo `/api/public/*` y estáticos públicos. Configurar Access en todos los dominios/preview hostnames que expongan la API. Las credenciales de correo de Access deben corresponder al campo `ADMIN_EMAIL` y al JWT verificado en el Worker. Si se omite cualquiera de los tres ajustes, toda operación ADM será denegada.
