@@ -200,6 +200,21 @@ async function adminApi(request:Request,db:Database,email:string,path:string):Pr
         audit(db,email,'update','player',id)]);
       return json({ok:true,id});
     }
+    if(method==='DELETE'&&playerRoute[1]){
+      const id=playerRoute[1];
+      const exists=await db.prepare('SELECT id FROM players WHERE id=?').bind(id).first<{id:string}>();
+      if(!exists)return err(404,'player_not_found');
+      const [appearance,goalkeeper]=await Promise.all([
+        db.prepare('SELECT match_id FROM match_players WHERE player_id=? LIMIT 1').bind(id).first<{match_id:string}>(),
+        db.prepare('SELECT id FROM matches WHERE goalkeeper_id=? LIMIT 1').bind(id).first<{id:string}>()
+      ]);
+      if(appearance||goalkeeper)return err(409,'player_has_history');
+      await db.batch([
+        db.prepare('DELETE FROM players WHERE id=?').bind(id),
+        audit(db,email,'delete','player',id)
+      ]);
+      return json({ok:true,id});
+    }
     return err(405,'method_not_allowed');
   }
   if(path==='/api/admin/seasons'&&method==='POST'){

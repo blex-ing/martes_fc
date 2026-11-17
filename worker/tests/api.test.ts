@@ -90,5 +90,33 @@ test('JWT firmado RS256 permite únicamente administrador autorizado y bloquea C
     assert.equal(invalidBody.status,400);
     const unauthorized=await verifyAdmin(request('/api/admin/session','GET',authHeaders),{...env,POLICY_AUD:'other'});
     assert.equal(unauthorized,null);
+    // El borrado requiere la sesión Access, nunca elimina referencias históricas.
+    for(const scenario of ['missing','has_appearances','was_goalkeeper','clean'] as const){
+      let batches=0;
+      const db:Database={
+        prepare(sql:string):Statement{
+          const stmt:Statement={
+            bind(){return stmt;},
+            async all<T>(){return {results:[] as T[]};},
+            async first<T>(){
+              if(sql==='SELECT id FROM players WHERE id=?')return (scenario==='missing'?null:{id:'p1'}) as T|null;
+              if(sql.includes('FROM match_players WHERE player_id='))return (scenario==='has_appearances'?{match_id:'m1'}:null) as T|null;
+              if(sql.includes('FROM matches WHERE goalkeeper_id='))return (scenario==='was_goalkeeper'?{id:'m1'}:null) as T|null;
+              return null;
+            },
+            async run(){return {meta:{changes:1}};}
+          };
+          return stmt;
+        },
+        async batch(statements:Statement[]){batches++;assert.equal(statements.length,2);return [];}
+      };
+      const result=await handleApi(request('/api/admin/players/p1','DELETE',authHeaders),{...env,DB:db});
+      assert.equal(result.status,scenario==='missing'?404:scenario==='clean'?200:409,scenario);
+      assert.equal(batches,scenario==='clean'?1:0,scenario);
+      const body=await result.json();
+      if(scenario==='has_appearances'||scenario==='was_goalkeeper')assert.equal(body.code,'player_has_history');
+    }
+    const withoutOrigin=await handleApi(request('/api/admin/players/p1','DELETE',{'Cf-Access-Jwt-Assertion':token}),env);
+    assert.equal(withoutOrigin.status,403);
   }finally{globalThis.fetch=old;}
 });

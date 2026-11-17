@@ -52,6 +52,9 @@ export async function createPlayer(name:string,role:'Portero'|'Jugador'):Promise
 export async function updatePlayer(id:string,patch:{name?:string;role?:'Portero'|'Jugador';active?:boolean}):Promise<void>{
   await mutation('/api/admin/players/'+encodeURIComponent(id),'PATCH',patch);
 }
+export async function deletePlayer(id:string):Promise<void>{
+  await mutation('/api/admin/players/'+encodeURIComponent(id),'DELETE');
+}
 export async function createSeason(label:string,start:string,end:string|null):Promise<void>{
   await mutation('/api/admin/seasons','POST',{label,start,end});
 }
