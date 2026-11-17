@@ -81,3 +81,15 @@ El esquema `0001_initial.sql` ya se aplicó y verificó **solo** en `martes-fc-p
 Fuentes oficiales (consultadas 17-11-2026):
 - https://developers.cloudflare.com/workers/ci-cd/builds/configuration/
 - https://developers.cloudflare.com/workers/ci-cd/builds/build-branches/
+
+## Resolución verificada: Preview `develop` desplegado (17-11-2026)
+
+La persona propietaria aportó un log de Workers Builds de 16:03–16:04 UTC con `Success! Build completed`. El comando de compilación ya incluye `cd web && npm ci --no-audit --no-fund && npm run build`, Vite compiló correctamente y `npx wrangler preview` actualizó la vista `develop`.
+
+- Preview estable de la rama: https://develop-martes-fc.ali-tio.workers.dev
+- URL del despliegue observado: https://3d1baac6-martes-fc.ali-tio.workers.dev
+- Incidencia `ENOENT /opt/buildhome/repo/package.json`: **resuelta para el build mostrado**.
+- La advertencia de `wrangler preview` en beta no es un fallo y no impidió el despliegue.
+- La advertencia npm sobre ESLint obsoleto es informativa; actualizar dependencias debe tramitarse por feature y CI, no en este ajuste de despliegue.
+
+**Pendiente antes de v0.2.0:** comprobar respuesta HTTP real de `/api/health` y `/api/public/snapshot`, confirmar `DB` de Preview, verificar Access y pruebas administrativas, backups y migración producción. La existencia de una URL Preview no demuestra por sí sola la consulta a D1. `master` permanece sin cambios.
