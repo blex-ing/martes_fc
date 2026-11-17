@@ -62,3 +62,33 @@ test('los recursos ajenos a API no revelan datos',async()=>{
   const r=await handleApi(request('/api/unknown'),{DB:mockDatabase()});
   assert.equal(r.status,404);
 });
+
+test('JWT firmado RS256 permite únicamente administrador autorizado y bloquea CSRF',async()=>{
+  const keys=await crypto.subtle.generateKey({
+    name:'RSASSA-PKCS1-v1_5',modulusLength:2048,publicExponent:new Uint8Array([1,0,1]),hash:'SHA-256'
+  },true,['sign','verify']);
+  const jwk=await crypto.subtle.exportKey('jwk',keys.publicKey);
+  const toPart=(value:unknown)=>Buffer.from(JSON.stringify(value)).toString('base64url');
+  const header=toPart({alg:'RS256',kid:'test-key',typ:'JWT'});
+  const payload=toPart({iss:'https://demo.cloudflareaccess.com',aud:'aud-test',exp:Math.floor(Date.now()/1000)+3600,email:'admin@example.test'});
+  const unsigned=header+'.'+payload;
+  const signature=Buffer.from(await crypto.subtle.sign('RSASSA-PKCS1-v1_5',keys.privateKey,new TextEncoder().encode(unsigned))).toString('base64url');
+  const token=unsigned+'.'+signature;
+  const env={DB:mockDatabase(),TEAM_DOMAIN:'https://demo.cloudflareaccess.com',POLICY_AUD:'aud-test',ADMIN_EMAIL:'admin@example.test'};
+  const old=globalThis.fetch;
+  globalThis.fetch=async()=>new Response(JSON.stringify({keys:[{...jwk,kid:'test-key',alg:'RS256'}]}),{
+    status:200,headers:{'Content-Type':'application/json'}
+  });
+  try{
+    const authHeaders={'Cf-Access-Jwt-Assertion':token,'Content-Type':'application/json','Origin':BASE};
+    assert.equal(await verifyAdmin(request('/api/admin/session','GET',authHeaders),env),'admin@example.test');
+    const get=await handleApi(request('/api/admin/session','GET',authHeaders),env);
+    assert.equal(get.status,200);
+    const wrongOrigin=await handleApi(request('/api/admin/players','POST',{...authHeaders,Origin:'https://evil.example'}),env);
+    assert.equal(wrongOrigin.status,403);
+    const invalidBody=await handleApi(request('/api/admin/players','POST',authHeaders),env);
+    assert.equal(invalidBody.status,400);
+    const unauthorized=await verifyAdmin(request('/api/admin/session','GET',authHeaders),{...env,POLICY_AUD:'other'});
+    assert.equal(unauthorized,null);
+  }finally{globalThis.fetch=old;}
+});
