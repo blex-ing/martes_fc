@@ -53,7 +53,9 @@ Archivo `wrangler.preview-migrations.jsonc`:
 ```
 
 ## Paso 2 · Aplicar migraciones primero en pruebas
-**PREVIEW: migración aplicada y tablas verificadas el 17-11-2026. PRODUCCIÓN: pendiente, no aplicar todavía.** Según la salida compartida por el propietario desde GitHub Codespaces, Wrangler 4.164.0 ejecutó correctamente `0001_initial.sql` sobre `PREVIEW_DB` (`8242fd69-84d4-4630-b4c2-7b6d29550aeb`) y confirmó las tablas `seasons`, `players`, `matches`, `match_players` y `audit_events`, junto a las tablas internas `d1_migrations`, `_cf_KV` y `sqlite_sequence`. El resultado fue `12 commands` ejecutados y estado `✅`. Esta comprobación acredita el esquema SQL, **no** la conexión de la API Worker, la autenticación ni la publicación de v0.2.0.\n\nLos comandos siguientes quedan como referencia reproducible; **no es necesario repetir la migración ya aplicada en PREVIEW**. En una terminal autenticada de Wrangler, situada en la raíz del repositorio y con una rama que tenga los bindings:
+**PREVIEW: migración aplicada y tablas verificadas el 17-11-2026. PRODUCCIÓN: pendiente, no aplicar todavía.** Según la salida compartida por el propietario desde GitHub Codespaces, Wrangler 4.164.0 ejecutó correctamente `0001_initial.sql` sobre `PREVIEW_DB` (`8242fd69-84d4-4630-b4c2-7b6d29550aeb`) y confirmó las tablas `seasons`, `players`, `matches`, `match_players` y `audit_events`, junto a las tablas internas `d1_migrations`, `_cf_KV` y `sqlite_sequence`. El resultado fue `12 commands` ejecutados y estado `✅`. Esta comprobación acredita el esquema SQL, **no** la conexión de la API Worker, la autenticación ni la publicación de v0.2.0.
+
+Los comandos siguientes quedan como referencia reproducible; **no es necesario repetir la migración ya aplicada en PREVIEW**. En una terminal autenticada de Wrangler, situada en la raíz del repositorio y con una rama que tenga los bindings:
 ```sh
 # 1. Ver qué migraciones faltan en la D1 de PREVIEW
 npx wrangler d1 migrations list PREVIEW_DB --remote --config wrangler.preview-migrations.jsonc
