@@ -51,7 +51,12 @@ jobs:
               raise AssertionError('Expected SQL CHECK to reject negative score')
           PY
       - run: npm run build
-      - run: npm audit --audit-level=high
+      - name: Security audit: runtime dependencies (strict)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Unit test the narrowly scoped full-audit exception
+        run: node --test scripts/security-audit.test.mjs
+      - name: Security audit: ALL dependencies (expiring, dev-only exception)
+        run: node scripts/security-audit.mjs
       - name: Validate documentation and versioned notes
         env:
           BRANCH: ${{ github.head_ref || github.ref_name }}
