@@ -1,0 +1,9 @@
+{
+  "name": "martes-fc",
+  "compatibility_date": "2026-11-17",
+  "assets": {
+    "directory": "./web/dist",
+    "not_found_handling": "single-page-application"
+  },
+  "previews": {}
+}

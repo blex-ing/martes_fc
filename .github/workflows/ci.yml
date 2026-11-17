@@ -1,0 +1,45 @@
+name: CI MARTES FC
+
+on:
+  pull_request:
+    branches: [develop, master]
+  push:
+    branches: [develop, master, 'feature/**', 'release/**']
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Static integrity and domain tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (as validated by mini_podcast on 2026-11-16)
+        with:
+          persist-credentials: false
+      - name: Setup Node 24
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
+      - name: Verify docs and release notes on release branches
+        shell: bash
+        env:
+          BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+          test -f ../documentacion/ARQUITECTURA_Y_MANTENIMIENTO.md
+          test -f ../documentacion/FLUJO_GIT_Y_RELEASES.md
+          if [[ "$BRANCH" == release/v* ]]; then
+            version="${BRANCH#release/}"
+            [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+            test -f "../documentacion/releases/${version}.md"
+          fi

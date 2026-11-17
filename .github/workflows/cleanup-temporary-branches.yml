@@ -1,0 +1,48 @@
+name: Cleanup merged temporary branches
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [develop, master]
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    name: Safely delete merged temporary branches
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      (
+        (github.event.pull_request.base.ref == 'develop' && startsWith(github.event.pull_request.head.ref, 'feature/')) ||
+        (github.event.pull_request.base.ref == 'master' && startsWith(github.event.pull_request.head.ref, 'release/'))
+      )
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Delete only original merged SHA
+        env:
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+          MERGED_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          remote_ref="refs/heads/${HEAD_BRANCH}"
+          current_sha="$(git ls-remote --heads origin "${remote_ref}" | awk '{print $1}')"
+          if [ -z "$current_sha" ]; then
+            echo 'Branch already absent'
+            exit 0
+          fi
+          if [ "$current_sha" != "$MERGED_HEAD_SHA" ]; then
+            echo 'Branch advanced; preserving it'
+            exit 0
+          fi
+          if git push --force-with-lease="${remote_ref}:${MERGED_HEAD_SHA}" origin ":${remote_ref}"; then
+            echo "Deleted safely: ${HEAD_BRANCH}"
+            exit 0
+          fi
+          echo '::error::Safe deletion failed; manual verification required'
+          exit 1

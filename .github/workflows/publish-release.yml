@@ -1,0 +1,51 @@
+name: Publish stable GitHub Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish tagged release
+    if: >-
+      github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'release/v') &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: master
+          fetch-depth: 0
+      - name: Create immutable-version tag and Release for current master
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_BRANCH: ${{ github.event.pull_request.head.ref }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${RELEASE_BRANCH#release/}"
+          [[ "$version" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || exit 1
+          git fetch origin master
+          current_master="$(git rev-parse origin/master)"
+          if [ "$current_master" != "$MERGE_SHA" ]; then
+            echo '::error::master advanced: manual review needed before tagging'
+            exit 1
+          fi
+          notes="documentacion/releases/${version}.md"
+          test -f "$notes" || { echo "::error::Release notes missing: $notes"; exit 1; }
+          if git ls-remote --tags origin "refs/tags/${version}" | grep -q .; then
+            echo "::error::Tag already exists: ${version}"
+            exit 1
+          fi
+          git tag "$version" "$MERGE_SHA"
+          git push origin "refs/tags/${version}"
+          gh release create "$version" --target "$MERGE_SHA" --title "$version" --notes-file "$notes"
