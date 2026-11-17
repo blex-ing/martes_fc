@@ -98,3 +98,12 @@ Cuentas para cada jugador, fotos reales, estadísticas de minutos o cambios de p
 - La corrección depende de Settings → Build en Cloudflare: root `/`, Build command `cd web && npm ci --no-audit --no-fund && npm run build` en las configuraciones pertinentes, Preview command `npx wrangler preview`; guardar y reintentar.
 - Evidencia de cierre: logs de Preview con compilación Vite satisfactoria, URL aislada y `GET /api/public/snapshot` funcionando con la base `martes-fc-preview`.
 - Procedimiento detallado: [Despliegue Cloudflare](DESPLIEGUE_CLOUDFLARE.md). La producción v0.1.1 se mantiene inalterada.
+
+### Despliegue Preview corregido (17-11-2026, 16:04 UTC)
+
+- Evidencia: log de Cloudflare Workers Builds aportado por el propietario; `Build command` efectivo `cd web && npm ci --no-audit --no-fund && npm run build`.
+- Resultado: `tsc --noEmit && vite build` correcto, 34 módulos transformados, salida en `web/dist`; `npx wrangler preview` completado con **Success: Deploy command completed** y **Success! Build completed**.
+- Preview de `develop` publicado: https://develop-martes-fc.ali-tio.workers.dev ; despliegue específico: https://3d1baac6-martes-fc.ali-tio.workers.dev .
+- Se cierra **el bloqueo de compilación ENOENT**, no la aceptación E2E. El log no contiene un GET HTTP del endpoint ni validación de lectura D1; **RF-020 y RF-030 siguen pendientes de comprobar API y conexión a la base PREVIEW**.
+- Próximo ensayo externo sin credenciales: `curl -i https://develop-martes-fc.ali-tio.workers.dev/api/health` y `curl -i https://develop-martes-fc.ali-tio.workers.dev/api/public/snapshot`. Esperado 200; `health.configured=true`; `snapshot.source=d1`, temporada 2026 y arrays de jugadores/partidos vacíos inicialmente. No cargar nombres reales sin autorización.
+- Trabajos adicionales: Cloudflare Access y escrituras autorizadas, backups, migración de producción y release; `master` continúa en v0.1.1.
