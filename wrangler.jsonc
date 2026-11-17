@@ -10,5 +10,6 @@
     ]
   },
   "previews": {},
-  "main": "./worker/index.ts"
+  "main": "./worker/index.ts",
+  "keep_vars": true
 }
