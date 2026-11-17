@@ -16,7 +16,15 @@
         "database_name": "martes-fc-preview",
         "database_id": "8242fd69-84d4-4630-b4c2-7b6d29550aeb"
       }
-    ]
+    ],
+    "observability": {
+      "enabled": true,
+      "logs": {
+        "enabled": true,
+        "invocation_logs": true,
+        "persist": true
+      }
+    }
   },
   "main": "./worker/index.ts",
   "keep_vars": true,
