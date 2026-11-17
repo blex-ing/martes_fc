@@ -15,3 +15,11 @@
 .match-row{min-width:0;width:100%;overflow:hidden}
 .match-result{flex:none}
 @media(max-width:380px){.match-row{padding:10px 9px;gap:7px}.match-date{min-width:30px}.match-info strong{font-size:10px}.match-info small{font-size:9px}.match-result strong{font-size:16px}.match-row-btn{padding:3px}}
+
+/* MARTES FC v0.2.0 — administración básica responsive, respetando el sistema Glass */
+.admin-tools{margin-top:24px}.admin-tools h3{margin-top:20px;color:var(--cyan)}
+.admin-tools .form-grid{margin:14px 0}.admin-tools .admin-list{margin:12px 0 20px;border-top:1px solid var(--line)}
+.admin-tools .admin-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.admin-tools .admin-row span{min-width:0;overflow-wrap:anywhere}.admin-tools .admin-row .outline-btn{flex:none}
+.admin-match-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+@media(max-width:480px){.admin-tools .admin-row{align-items:flex-start;flex-direction:column}.admin-tools .admin-row .outline-btn{align-self:flex-start}}

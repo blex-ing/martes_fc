@@ -1,4 +1,9 @@
-# Changelog — MARTES FC
+## [Unreleased] — D1 bindings y seguridad de entornos
+- Registrados en Wrangler los identificadores reales de `martes-fc-prod` y `martes-fc-preview`.
+- Configuración independiente de migraciones de preview y comprobación CI contra contaminación de producción.
+- Actualizado el manual de operación sin ejecutar migraciones ni publicar la release.
+
+## [Unreleased] — Propuesta v0.2.0 (no desplegada)\n- Registro vivo de requisitos y trazabilidad por feature.\n- Migración SQL D1 y endpoints públicos y administrativos.\n- Conexión del dashboard React a datos compartidos con demo de contingencia.\n- Panel de administración de jugadores/temporadas y edición de partidos.\n- Protección de escritura con verificación JWT Cloudflare Access y Origin.\n- Tests Worker, contrato, dominio y esquema SQL.\n- La publicación requiere D1 + Access reales y QA previa.\n\n# Changelog — MARTES FC
 
 ## v0.1.1 — Preparación del primer despliegue en Cloudflare
 - Metadatos Open Graph y esquema de color para compartir el dashboard de demostración.

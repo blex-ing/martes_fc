@@ -26,10 +26,32 @@ jobs:
           package-manager-cache: false
       - run: npm ci --no-audit --no-fund
       - run: npm run check:public
+      - run: npm run check:d1
       - run: npm run typecheck
+      - run: npm run typecheck:worker
       - run: npm run lint
       - run: npm test
+      - run: npm run test:worker
+      - name: Validate SQL migrations and referential integrity
+        run: |
+          python3 - <<'PY'
+          import sqlite3
+          from pathlib import Path
+          db = sqlite3.connect(':memory:')
+          db.executescript(Path('../migrations/0001_initial.sql').read_text())
+          assert db.execute('SELECT COUNT(*) FROM seasons').fetchone()[0] == 1
+          db.execute('INSERT INTO players(id,public_name,role,initials,avatar_a,avatar_b) VALUES(?,?,?,?,?,?)',
+                     ('p1','Portero prueba','Portero','PP','#147aa3','#6540a7'))
+          try:
+              db.execute('INSERT INTO matches(id,season_id,played_on,opponent,goals_for,goals_against,saves,goalkeeper_id) VALUES(?,?,?,?,?,?,?,?)',
+                         ('invalid','season-2026','2026-11-17','Rival',-1,0,0,'p1'))
+          except sqlite3.IntegrityError:
+              pass
+          else:
+              raise AssertionError('Expected SQL CHECK to reject negative score')
+          PY
       - run: npm run build
+      - run: npm run check:no-picomatch
       - run: npm audit --audit-level=high
       - name: Validate documentation and versioned notes
         env:
