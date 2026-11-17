@@ -93,3 +93,27 @@ Antes de migrar, exportar D1 o usar Time Travel/backup según el plan vigente y 
 
 ## Política de publicaciones
 No fusionar a `master` ni etiquetar v0.2.0 hasta que D1 y Access reales estén configurados, pruebas remotas pasen y las URLs sean confirmadas. La demo v0.1.1 sigue accesible mientras se trabaja en develop.
+
+## Comprobación API Preview desde Codespaces (17-11-2026, 16:30 UTC)
+
+**Verificada mediante la salida de dos peticiones HTTP proporcionada por el propietario:**
+
+```text
+GET https://develop-martes-fc.ali-tio.workers.dev/api/health
+HTTP/2 200
+{"ok":true,"configured":true}
+
+GET https://develop-martes-fc.ali-tio.workers.dev/api/public/snapshot
+HTTP/2 200
+{"version":2,"source":"d1","seasons":[{"id":"season-2026","label":"2026","active":true,...}],"players":[],"matches":[]}
+```
+
+La API y D1 Preview responden correctamente. **No se han probado escrituras, sesiones de Access ni D1 de producción.** Los `players` y `matches` vacíos son esperados: no se han registrado datos reales.
+
+### Próximo objetivo: administrador sin cerrar la web pública
+
+- Crear aplicación **Cloudflare Zero Trust → Access → Applications → Self-hosted** con dominio/ruta específicos de **Preview** `develop-martes-fc.ali-tio.workers.dev/api/admin/*`. Una regla para todo el Worker bloquearía también `/api/public/snapshot`, por lo que **NO** usar protección de Worker completo.
+- Configurar política `Allow` para un único correo autorizado por el propietario y método de identidad fiable; no copiar ese correo a GitHub público.
+- Configurar variables de ejecución del **Worker Preview** (`TEAM_DOMAIN`, `POLICY_AUD`, `ADMIN_EMAIL`) fuera de Git. No confundir las variables de **Builds/Previews Base** con variables del runtime del Worker; verificar su disponibilidad real.
+- Validar la autenticación: `/api/admin/session` anónimo → desafío o 401; sesión válida → JSON `ok=true`, y `POST` con origen permitido modifica únicamente D1 Preview. Para validar el aislamiento comprobar que producción permanece sin datos de prueba.
+- Documentación de Cloudflare: https://developers.cloudflare.com/workers/configuration/cloudflare-access/ . La ubicación exacta de controles en UI puede variar.
