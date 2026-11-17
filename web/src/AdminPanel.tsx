@@ -28,10 +28,10 @@ export default function AdminPanel({online,authenticated,players,seasons,onRefre
    finally{setBusy(false);}
  }
  async function addPlayer(e:FormEvent<HTMLFormElement>){
-   e.preventDefault();await perform(()=>createPlayer(name,role),'Jugador añadido');setName('');
+   e.preventDefault();if(await perform(()=>createPlayer(name,role),'Jugador añadido'))setName('');
  }
  async function addSeason(e:FormEvent<HTMLFormElement>){
-   e.preventDefault();await perform(()=>createSeason(label,start,end||null),'Temporada añadida');setLabel('');
+   e.preventDefault();if(await perform(()=>createSeason(label,start,end||null),'Temporada añadida'))setLabel('');
  }
  return <section className="panel glass data-tools admin-tools" aria-label="Administración del equipo">
    <div className="panel-heading"><div><h2>Administración del equipo</h2><p>Resultados compartidos en Cloudflare D1 · cambios protegidos</p></div></div>
