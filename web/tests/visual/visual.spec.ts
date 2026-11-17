@@ -25,3 +25,10 @@ test('formulario valida la suma de goles',async ({page})=>{
  await page.getByRole('button',{name:/Guardar partido/}).click();
  await expect(page.getByRole('alert')).toContainText('suma de goles');
 });
+
+test('metadatos accesibles para compartir la demo pública',async ({page})=>{
+ await page.goto('/');
+ await expect(page).toHaveTitle(/MARTES FC/);
+ await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content','MARTES FC · Estadísticas');
+ await expect(page.locator('meta[name="color-scheme"]')).toHaveAttribute('content','dark');
+});
