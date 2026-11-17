@@ -14,24 +14,24 @@ Una web abierta con estadísticas deportivas del equipo MARTES FC. El código y 
 - DEV: contribuyente al código mediante PR; NO obtiene privilegios sobre D1 ni sobre datos privados por acceso a GitHub.
 
 ## v0.2.0 — requisitos funcionales
-| ID | Capacidad / aceptación verificable | Prioridad | Estado inicial | Prueba objetivo |
+| ID | Capacidad / aceptación verificable | Prioridad | Estado y evidencia | Prueba objetivo |
 |---|---|---|---|---|
-| RF-020 | VIS obtiene jugadores y partidos publicados con un único GET, compartidos entre navegadores | P0 | Aprobado | API: 200, contrato JSON, solo campos públicos |
-| RF-021 | Persistir jugadores con ID, alias público, rol (Portero/Jugador), colores de avatar y estado activo | P0 | Aprobado | SQL constraints, endpoint |
-| RF-022 | Persistir partidos con fecha, rival, GF, GC, portero, paradas y temporada | P0 | Aprobado | API + SQL |
-| RF-023 | Persistir participación por partido y goles individuales; suma goles = GF | P0 | Aprobado | Test de dominio y rechazo 400 |
-| RF-024 | Calcular KPIs, ranking, fichas y portería sin guardar agregados duplicados | P0 | Aprobado | Tests de cálculo existentes |
-| RF-025 | Mantener la demo usable si no hay D1, sin presentar demo como dato real | P0 | Aprobado | Test web y estado de origen |
-| RF-026 | ADM crea partidos en servidor; no permite modificar desde interfaz anónima | P0 | Aprobado | API: 401/403 sin Access verificado |
-| RF-027 | ADM edita y elimina partidos, actualiza plantilla; operaciones con trazabilidad | P1 | Aprobado | API + auditoría |
-| RF-028 | Gestionar temporadas desde D1 (una activa inicialmente); consultar por temporada en futuro | P1 | Aprobado | SQL FK y lectura |
-| RF-029 | ADM solo accede mediante JWT Cloudflare Access validado (firma, issuer, audience y correo autorizado) | P0 | Aprobado | Tests negativos auth |
-| RF-030 | Separar D1 de producción y D1 de preview; nunca se reutiliza la D1 de producción en CI/preview | P0 | Aprobado | Config y revisión |
-| RF-031 | Un administrador puede exportar datos públicos en JSON y el mantenimiento dispone de procedimiento de backup | P1 | Aprobado | Pruebas export y runbook |
-| RF-032 | Nada de resultados reales ni nombres reales en las migraciones/fixtures públicas sin consentimiento previo | P0 | Aprobado | check:public y revisión |
-| RF-033 | Mostrar fuente y estado de sincronización sin confundir datos demo, remotos o caídos | P0 | Aprobado | QA móvil/desktop |
-| RF-034 | ADM puede desactivar jugadores sin borrar su histórico de partidos | P1 | Aprobado | SQL + UI |
-| RF-035 | VIS recibe respuestas cacheables brevemente; cambios ADM invalidan mediante cache corto y revalidación | P1 | Aprobado | Control Cache-Control |
+| RF-020 | VIS obtiene jugadores y partidos publicados con un único GET, compartidos entre navegadores | P0 | Verificado en CI; E2E remoto pendiente | API: 200, contrato JSON, solo campos públicos |
+| RF-021 | Persistir jugadores con ID, alias público, rol (Portero/Jugador), colores de avatar y estado activo | P0 | Verificado en CI; E2E remoto pendiente | SQL constraints, endpoint |
+| RF-022 | Persistir partidos con fecha, rival, GF, GC, portero, paradas y temporada | P0 | Verificado en CI; E2E remoto pendiente | API + SQL |
+| RF-023 | Persistir participación por partido y goles individuales; suma goles = GF | P0 | Verificado en CI; E2E remoto pendiente | Test de dominio y rechazo 400 |
+| RF-024 | Calcular KPIs, ranking, fichas y portería sin guardar agregados duplicados | P0 | Verificado en CI; E2E remoto pendiente | Tests de cálculo existentes |
+| RF-025 | Mantener la demo usable si no hay D1, sin presentar demo como dato real | P0 | Verificado en CI; E2E remoto pendiente | Test web y estado de origen |
+| RF-026 | ADM crea partidos en servidor; no permite modificar desde interfaz anónima | P0 | Verificado en CI; E2E remoto pendiente | API: 401/403 sin Access verificado |
+| RF-027 | ADM edita y elimina partidos, actualiza plantilla; operaciones con trazabilidad | P1 | Verificado en CI; E2E remoto pendiente | API + auditoría |
+| RF-028 | Gestionar temporadas desde D1 (una activa inicialmente); consultar por temporada en futuro | P1 | Verificado en CI; E2E remoto pendiente | SQL FK y lectura |
+| RF-029 | ADM solo accede mediante JWT Cloudflare Access validado (firma, issuer, audience y correo autorizado) | P0 | Verificado en CI; E2E remoto pendiente | Tests negativos auth |
+| RF-030 | Separar D1 de producción y D1 de preview; nunca se reutiliza la D1 de producción en CI/preview | P0 | Bloqueado: D1 preview/prod pendientes | Config y revisión |
+| RF-031 | Un administrador puede exportar datos públicos en JSON y el mantenimiento dispone de procedimiento de backup | P1 | En desarrollo: backup remoto pendiente | Pruebas export y runbook |
+| RF-032 | Nada de resultados reales ni nombres reales en las migraciones/fixtures públicas sin consentimiento previo | P0 | Verificado en CI; E2E remoto pendiente | check:public y revisión |
+| RF-033 | Mostrar fuente y estado de sincronización sin confundir datos demo, remotos o caídos | P0 | Verificado en CI; E2E remoto pendiente | QA móvil/desktop |
+| RF-034 | ADM puede desactivar jugadores sin borrar su histórico de partidos | P1 | Verificado en CI; E2E remoto pendiente | SQL + UI |
+| RF-035 | VIS recibe respuestas cacheables brevemente; cambios ADM invalidan mediante cache corto y revalidación | P1 | Verificado en CI; E2E remoto pendiente | Control Cache-Control |
 
 ## No funcionales v0.2.0
 | ID | Requisito | Criterio / protección |
@@ -64,10 +64,16 @@ Cuentas para cada jugador, fotos reales, estadísticas de minutos o cambios de p
 | Versión | Requisitos | Feature / PR | CI | Despliegue |
 |---|---|---|---|---|
 | v0.1.1 | RF-001 a RF-008 (ver `REQUISITOS.md`) | Historial anterior | Verificado | Workers Build OK |
-| v0.2.0 | RF-020 a RF-035 y RNF-020 a RNF-030 | `feature/d1-shared-stats-v020` (en desarrollo) | Pendiente | Requiere D1 y Access reales |
+| v0.2.0 | RF-020 a RF-035 y RNF-020 a RNF-030 | [PR #9](https://github.com/blex-ing/martes_fc/pull/9) | [CI Worker+React+SQL+QA](https://github.com/blex-ing/martes_fc/actions/runs/44104083710) ✅ | Requiere D1 y Access reales |
 
 ## Referencias
 - [Propuesta de versión](PROPUESTA_V0.2.0.md)
 - [Modelo y contrato](MODELO_Y_API_D1.md)
 - [Operación y configuración](OPERACION_D1_ACCESS.md)
 - [Requisitos iniciales](../REQUISITOS.md)
+
+## Estado de aceptación v0.2.0 (actualizado 2026-11-17)
+- Implementación y tests automáticos: completados en la feature, PR #9.
+- Configuración remota D1 y Access, E2E con usuarios reales y export/restore D1: **BLOQUEADOS** hasta disponer de recursos externos; no declarar la versión publicada.
+- Las pruebas de firma JWT incluyen una firma RS256 válida generada en test, cambios de audiencia y bloqueo por Origin. No sustituyen la prueba real con Cloudflare Access.
+- Al crear D1, actualizar filas RF-030/RF-031, enlazar evidencia de test remoto y PR de release; conservar este historial, no borrar las versiones anteriores.
