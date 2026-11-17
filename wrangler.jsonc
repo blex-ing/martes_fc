@@ -9,7 +9,24 @@
       "/api/*"
     ]
   },
-  "previews": {},
+  "previews": {
+    "d1_databases": [
+      {
+        "binding": "DB",
+        "database_name": "martes-fc-preview",
+        "database_id": "8242fd69-84d4-4630-b4c2-7b6d29550aeb"
+      }
+    ]
+  },
   "main": "./worker/index.ts",
-  "keep_vars": true
+  "keep_vars": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "martes-fc-prod",
+      "database_id": "cd88771a-bfce-4b6b-873f-61066407a7db",
+      "preview_database_id": "8242fd69-84d4-4630-b4c2-7b6d29550aeb",
+      "migrations_dir": "migrations"
+    }
+  ]
 }
