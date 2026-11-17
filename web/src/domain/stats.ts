@@ -1,11 +1,11 @@
 /** Reglas puras de MARTES FC. Ningún acceso a DOM, red o almacenamiento. */
 export type PlayerRole = 'Portero' | 'Jugador';
-export interface Player { id: string; name: string; role: PlayerRole; initials: string; a: string; b: string }
+export interface Player { id: string; name: string; role: PlayerRole; initials: string; a: string; b: string; active?: boolean }
 export interface Match {
   id: string; date: string; opponent: string;
   goalsFor: number; goalsAgainst: number; appearances: string[];
   goals: Record<string, number>; goalkeeperId: string | null;
-  saves: number; status: 'finished';
+  saves: number; status: 'finished'; seasonId?: string; revision?: number;
 }
 export type ResultCode = 'win' | 'loss' | 'draw';
 export interface PlayerStats { played: number; goals: number; saves: number; conceded: number; keeperPlayed: number; rate: number; clean: number }
