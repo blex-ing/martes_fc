@@ -9,7 +9,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "node --experimental-strip-types --test tests/stats.test.ts",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
     "test:visual": "playwright test",
     "check:public": "node scripts/check-public.mjs",
     "typecheck:worker": "tsc -p ../worker/tsconfig.json",
