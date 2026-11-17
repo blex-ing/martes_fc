@@ -75,37 +75,56 @@ function decodeJson(value:string):Record<string,unknown> {
   if(!parsed||typeof parsed!=='object'||Array.isArray(parsed))throw Error('invalid_jwt');
   return parsed as Record<string,unknown>;
 }
-/** Fail-closed: firma RS256 validada con JWKS de Cloudflare; no se confía solo en cabeceras. */
+/** Diagnostic codes are fixed constants: never log JWTs, claims, emails, URLs or secret values. */
+function denyAccess(reason:
+  'missing_access_token'|'missing_team_domain'|'missing_audience'|'missing_admin_email'|
+  'invalid_team_domain'|'malformed_token'|'unsupported_header'|'issuer_mismatch'|
+  'audience_mismatch'|'expired_token'|'invalid_token_time'|'email_mismatch'|
+  'certificates_unavailable'|'invalid_certificates'|'signing_key_not_found'|
+  'invalid_signature'|'verification_exception'
+): null {
+  console.warn('[martes-fc][access] denied:',reason);
+  return null;
+}
+/** Fail-closed: validates the RS256 Access JWT, issuer, audience and admin email.
+ * Only categorical reasons are written to Workers Observability, NEVER token material.
+ */
 export async function verifyAdmin(request:Request,env:Env):Promise<string|null> {
   const token=request.headers.get('Cf-Access-Jwt-Assertion');
-  const team=env.TEAM_DOMAIN?.replace(/\/$/,'');
-  const aud=env.POLICY_AUD,admin=env.ADMIN_EMAIL?.trim().toLowerCase();
-  if(!token||!team||!aud||!admin||!/^https:\/\/[a-z0-9-]+\.cloudflareaccess\.com$/.test(team))return null;
+  const team=env.TEAM_DOMAIN?.trim().replace(/\/$/,'');
+  const aud=env.POLICY_AUD?.trim(),admin=env.ADMIN_EMAIL?.trim().toLowerCase();
+  if(!token)return denyAccess('missing_access_token');
+  if(!team)return denyAccess('missing_team_domain');
+  if(!aud)return denyAccess('missing_audience');
+  if(!admin)return denyAccess('missing_admin_email');
+  if(!/^https:\/\/[a-z0-9-]+\.cloudflareaccess\.com$/.test(team))return denyAccess('invalid_team_domain');
   const parts=token.split('.');
-  if(parts.length!==3||parts.some(p=>!p||p.length>4096))return null;
+  if(parts.length!==3||parts.some(p=>!p||p.length>4096))return denyAccess('malformed_token');
   try{
     const header=decodeJson(parts[0]!);
-    if(header.alg!=='RS256'||typeof header.kid!=='string'||header.kid.length>256)return null;
+    if(header.alg!=='RS256'||typeof header.kid!=='string'||header.kid.length>256)return denyAccess('unsupported_header');
     const claims=decodeJson(parts[1]!);
     const now=Math.floor(Date.now()/1000);
-    if(claims.iss!==team||
-      !(claims.aud===aud||(Array.isArray(claims.aud)&&claims.aud.includes(aud)))||
-      typeof claims.exp!=='number'||claims.exp<=now||
-      (typeof claims.nbf==='number'&&claims.nbf>now+30)||
-      (typeof claims.iat==='number'&&claims.iat>now+30)||
-      typeof claims.email!=='string'||claims.email.trim().toLowerCase()!==admin
-    )return null;
+    if(claims.iss!==team)return denyAccess('issuer_mismatch');
+    if(!(claims.aud===aud||(Array.isArray(claims.aud)&&claims.aud.includes(aud))))
+      return denyAccess('audience_mismatch');
+    if(typeof claims.exp!=='number'||claims.exp<=now)return denyAccess('expired_token');
+    if((typeof claims.nbf==='number'&&claims.nbf>now+30)||
+       (typeof claims.iat==='number'&&claims.iat>now+30))return denyAccess('invalid_token_time');
+    if(typeof claims.email!=='string'||claims.email.trim().toLowerCase()!==admin)return denyAccess('email_mismatch');
     const reply=await fetch(team+'/cdn-cgi/access/certs',{signal:AbortSignal.timeout(4000)});
-    if(!reply.ok)return null;
+    if(!reply.ok)return denyAccess('certificates_unavailable');
     const jwks:unknown=await reply.json();
-    if(!jwks||typeof jwks!=='object'||!('keys' in jwks)||!Array.isArray(jwks.keys))return null;
+    if(!jwks||typeof jwks!=='object'||!('keys' in jwks)||!Array.isArray(jwks.keys))
+      return denyAccess('invalid_certificates');
     const key=jwks.keys.find((k:unknown)=>!!k&&typeof k==='object'&&'kid' in k&&k.kid===header.kid&&'kty' in k&&k.kty==='RSA');
-    if(!key)return null;
+    if(!key)return denyAccess('signing_key_not_found');
     const imported=await crypto.subtle.importKey('jwk',key,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['verify']);
     const data=new TextEncoder().encode(parts[0] + '.' + parts[1]);
     const verified=await crypto.subtle.verify('RSASSA-PKCS1-v1_5',imported,decodePart(parts[2]!),data);
-    return verified?admin:null;
-  }catch{return null;}
+    if(!verified)return denyAccess('invalid_signature');
+    return admin;
+  }catch{return denyAccess('verification_exception');}
 }
 async function snapshot(db:Database):Promise<unknown> {
   const [seasons,players,matches,appearances]=await Promise.all([
