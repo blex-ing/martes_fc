@@ -48,7 +48,7 @@ function AddMatchForm({onClose,onSave}:{onClose:()=>void;onSave:(m:Match)=>boole
   const appearances=players.filter(p=>present[p.id]).map(p=>p.id);
   if(!appearances.length){setError('Selecciona al menos un jugador.');return;}
   if(players.some(p=>!present[p.id] && Number(goals[p.id])!==0)){setError('Un jugador ausente no puede marcar goles.');return;}
-  const assigned=Object.fromEntries(appearances.map(id=>[id,Number(goals[id]??0)]).filter(([,n])=>n>0));
+  const assigned=Object.fromEntries(appearances.map((id):[string,number]=>[id,Number(goals[id]??0)]).filter(([,n])=>n>0)) as Record<string,number>;
   if(Object.values(assigned).reduce((n,v)=>n+v,0)!==Number(goalsFor)){setError('La suma de goles por jugador debe coincidir con el marcador.');return;}
   const keeperPresent=appearances.includes(goalkeeper.id);
   const record: Match={id:'local-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),date,opponent:opponent.trim(),goalsFor:Number(goalsFor),goalsAgainst:Number(goalsAgainst),saves:Number(saves),appearances,goals:assigned,goalkeeperId:keeperPresent?goalkeeper.id:null,status:'finished'};
