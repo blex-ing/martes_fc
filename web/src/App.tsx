@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
-import { players, seedMatches } from './data/demo';
+import { players as demoPlayers, seedMatches } from './data/demo';
+import { adminSession, loadPublicSnapshot, createMatch, updateMatch, deleteMatch, type Season } from './data/api';
+import AdminPanel from './AdminPanel';
 import { exportDemo, loadMatches, saveMatches } from './data/storage';
 import { isValidDate, leaderboard, playerMetrics, resultCode, teamMetrics, validateMatch, type Match, type Player } from './domain/stats';
 
 type View = 'overview'|'matches'|'players'|'goalkeeper'|'settings';
-type ModalState = {kind:'new'}|{kind:'profile';id:string}|null;
+type ModalState = {kind:'new'}|{kind:'edit';id:string}|{kind:'profile';id:string}|null;
 type Filter = 'all'|'win'|'draw'|'loss';
 const names: Record<Exclude<View,'settings'>,string> = {overview:'Resumen general',matches:'Partidos',players:'Jugadores',goalkeeper:'Portería'};
 const icons: Record<Exclude<View,'settings'>,string> = {overview:'grid',matches:'calendar',players:'users',goalkeeper:'shield'};
 const resultLabels = {win:'VICTORIA',loss:'DERROTA',draw:'EMPATE'};
-const goalkeeper = players[0]!;
+
 function Icon({name, className='icon'}:{name:string;className?:string}) { return <svg className={className} aria-hidden="true"><use href={'#ic-'+name}/></svg>; }
 function Avatar({p,className='round-avatar'}:{p:Player;className?:string}) {
  const style = {'--avatar-a':p.a,'--avatar-b':p.b} as CSSProperties;
@@ -20,7 +22,7 @@ function datePart(value:string) {const date = new Date(value+'T12:00:00');return
 function Intro({eyebrow,title,accent,description,action}:{eyebrow:string;title:string;accent:string;description:string;action?:ReactNode}) {
  return <section className="view-intro"><div><div className="kicker"><i className="line"/>{eyebrow}</div><h1>{title}<br/><span>{accent}</span></h1><p>{description}</p></div>{action}</section>;
 }
-function Disclaimer() {return <div className="disclaimer"><Icon name="info"/><span><strong>Vista de demostración.</strong> Partidos y resultados ficticios. Los cambios se guardan solo en este dispositivo.</span></div>;}
+function Disclaimer({live,online}:{live:boolean;online:boolean}) {return <div className="disclaimer"><Icon name="info"/><span>{live?<><strong>Resultados compartidos.</strong> Datos cargados desde Cloudflare D1.</>:online?<><strong>Base de datos vacía.</strong> Se muestra una demo local hasta dar de alta al portero.</>:<><strong>Vista de demostración.</strong> Partidos y resultados ficticios. Los cambios se guardan solo en este dispositivo.</>}</span></div>;}
 function Metric({label,value,hint,icon,tone}:{label:string;value:number|string;hint:string;icon:string;tone:string}){
  return <div className={'metric glass tone-'+tone}><div className="metric-top"><span className="metric-label">{label}</span><span className="metric-icon"><Icon name={icon}/></span></div><div className="metric-value">{value}</div><div className="metric-hint">{hint}</div></div>;
 }
@@ -32,14 +34,14 @@ function Donut({rate}:{rate:number}) {
  const circumference=2*Math.PI*52,dash=circumference*Math.min(100,Math.max(0,rate))/100;
  return <div className="donut"><svg viewBox="0 0 130 130" role="img" aria-label={String(rate)+'% de paradas'}><defs><linearGradient id="donutGrad" x1="0%" y1="0%" x2="100%" y2="100%"><stop stopColor="#24e6fa"/><stop offset="1" stopColor="#f533e7"/></linearGradient></defs><circle className="donut-track" cx="65" cy="65" r="52"/><circle className="donut-value" cx="65" cy="65" r="52" strokeDasharray={dash.toFixed(2)+' '+circumference.toFixed(2)}/></svg><div className="donut-label">{rate}%<small>paradas</small></div></div>;
 }
-function AddMatchForm({onClose,onSave}:{onClose:()=>void;onSave:(m:Match)=>boolean}) {
- const [date,setDate]=useState(new Date().toLocaleDateString('en-CA'));
- const [opponent,setOpponent]=useState('');
- const [goalsFor,setGoalsFor]=useState('0'),[goalsAgainst,setGoalsAgainst]=useState('0'),[saves,setSaves]=useState('0');
- const [present,setPresent]=useState<Record<string,boolean>>(Object.fromEntries(players.map(p=>[p.id,true])));
- const [goals,setGoals]=useState<Record<string,string>>(Object.fromEntries(players.map(p=>[p.id,'0'])));
+function AddMatchForm({onClose,onSave,players,goalkeeper,initial}:{onClose:()=>void;onSave:(m:Match)=>Promise<boolean>;players:Player[];goalkeeper:Player;initial?:Match}) {
+ const [date,setDate]=useState(initial?.date??new Date().toLocaleDateString('en-CA'));
+ const [opponent,setOpponent]=useState(initial?.opponent??'');
+ const [goalsFor,setGoalsFor]=useState(String(initial?.goalsFor??0)),[goalsAgainst,setGoalsAgainst]=useState(String(initial?.goalsAgainst??0)),[saves,setSaves]=useState(String(initial?.saves??0));
+ const [present,setPresent]=useState<Record<string,boolean>>(Object.fromEntries(players.map(p=>[p.id,initial?initial.appearances.includes(p.id):true])));
+ const [goals,setGoals]=useState<Record<string,string>>(Object.fromEntries(players.map(p=>[p.id,String(initial?.goals[p.id]??0)])));
  const [error,setError]=useState('');
- function submit(e:FormEvent<HTMLFormElement>) {
+ async function submit(e:FormEvent<HTMLFormElement>) {
   e.preventDefault();setError('');
   const nums=[goalsFor,goalsAgainst,saves,...players.map(p=>goals[p.id]??'0')];
   if(nums.some(n=>!/^\d+$/.test(n))){setError('Los goles y las paradas deben ser enteros no negativos.');return;}
@@ -51,23 +53,37 @@ function AddMatchForm({onClose,onSave}:{onClose:()=>void;onSave:(m:Match)=>boole
   const assigned=Object.fromEntries(appearances.map((id):[string,number]=>[id,Number(goals[id]??0)]).filter(([,n])=>n>0)) as Record<string,number>;
   if(Object.values(assigned).reduce((n,v)=>n+v,0)!==Number(goalsFor)){setError('La suma de goles por jugador debe coincidir con el marcador.');return;}
   const keeperPresent=appearances.includes(goalkeeper.id);
-  const record: Match={id:'local-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),date,opponent:opponent.trim(),goalsFor:Number(goalsFor),goalsAgainst:Number(goalsAgainst),saves:Number(saves),appearances,goals:assigned,goalkeeperId:keeperPresent?goalkeeper.id:null,status:'finished'};
+  const record: Match={id:initial?.id??('local-'+Date.now()+'-'+Math.random().toString(36).slice(2,8)),date,opponent:opponent.trim(),goalsFor:Number(goalsFor),goalsAgainst:Number(goalsAgainst),saves:Number(saves),appearances,goals:assigned,goalkeeperId:keeperPresent?goalkeeper.id:null,status:'finished',...(initial?.revision?{revision:initial.revision}:{}),...(initial?.seasonId?{seasonId:initial.seasonId}:{})};
   if(!validateMatch(record,players.map(p=>p.id),goalkeeper.id)){setError('El partido contiene cifras inconsistentes. Revisa los valores y la participación del portero.');return;}
-  if(!onSave(record)){setError('No se pudo guardar en este navegador.');}
+  if(!await onSave(record)){setError('No se pudo guardar el partido. Revisa tu acceso.');}
  }
- return <form id="addMatchForm" onSubmit={submit}><div className="form-grid"><div className="field"><label htmlFor="matchDate">Fecha</label><input id="matchDate" type="date" required value={date} onChange={e=>setDate(e.target.value)}/></div><div className="field"><label htmlFor="matchOpponent">Equipo rival</label><input id="matchOpponent" required maxLength={80} placeholder="Nombre del rival" value={opponent} onChange={e=>setOpponent(e.target.value)}/></div><div className="field"><label htmlFor="matchGF">Goles a favor</label><input id="matchGF" type="number" min="0" max="99" step="1" required value={goalsFor} onChange={e=>setGoalsFor(e.target.value)}/></div><div className="field"><label htmlFor="matchGA">Goles en contra</label><input id="matchGA" type="number" min="0" max="99" step="1" required value={goalsAgainst} onChange={e=>setGoalsAgainst(e.target.value)}/></div><div className="field full"><label htmlFor="matchSaves">Paradas del portero</label><input id="matchSaves" type="number" min="0" max="200" step="1" required value={saves} onChange={e=>setSaves(e.target.value)}/></div></div><div className="form-section-title">Participantes y goleadores</div><p style={{fontSize:12,marginBottom:12}}>Marca quién jugó e indica los goles individuales.</p><div className="goal-input-list">{players.map(p=><div className={'goal-input-row '+(!present[p.id]?'disabled':'')} key={p.id}><input id={'present-'+p.id} type="checkbox" checked={!!present[p.id]} onChange={e=>{const checked=e.target.checked;setPresent(s=>({...s,[p.id]:checked}));if(!checked)setGoals(s=>({...s,[p.id]:'0'}));}} aria-label={p.name+' participó'}/><label htmlFor={'present-'+p.id}>{p.name}</label><input aria-label={'Goles de '+p.name} type="number" min="0" max="99" value={goals[p.id]} disabled={!present[p.id]} onChange={e=>setGoals(s=>({...s,[p.id]:e.target.value}))}/></div>)}</div>{error&&<div className="validation" role="alert">{error}</div>}<div className="modal-note">La suma de los goles individuales debe coincidir con el marcador. Los datos no se comparten entre navegadores.</div><div className="modal-footer"><button type="button" className="secondary-btn" onClick={onClose}>Cancelar</button><button className="primary-btn" type="submit">Guardar partido <Icon name="arrow"/></button></div></form>;
+ return <form id="addMatchForm" onSubmit={submit}><div className="form-grid"><div className="field"><label htmlFor="matchDate">Fecha</label><input id="matchDate" type="date" required value={date} onChange={e=>setDate(e.target.value)}/></div><div className="field"><label htmlFor="matchOpponent">Equipo rival</label><input id="matchOpponent" required maxLength={80} placeholder="Nombre del rival" value={opponent} onChange={e=>setOpponent(e.target.value)}/></div><div className="field"><label htmlFor="matchGF">Goles a favor</label><input id="matchGF" type="number" min="0" max="99" step="1" required value={goalsFor} onChange={e=>setGoalsFor(e.target.value)}/></div><div className="field"><label htmlFor="matchGA">Goles en contra</label><input id="matchGA" type="number" min="0" max="99" step="1" required value={goalsAgainst} onChange={e=>setGoalsAgainst(e.target.value)}/></div><div className="field full"><label htmlFor="matchSaves">Paradas del portero</label><input id="matchSaves" type="number" min="0" max="200" step="1" required value={saves} onChange={e=>setSaves(e.target.value)}/></div></div><div className="form-section-title">Participantes y goleadores</div><p style={{fontSize:12,marginBottom:12}}>Marca quién jugó e indica los goles individuales.</p><div className="goal-input-list">{players.map(p=><div className={'goal-input-row '+(!present[p.id]?'disabled':'')} key={p.id}><input id={'present-'+p.id} type="checkbox" checked={!!present[p.id]} onChange={e=>{const checked=e.target.checked;setPresent(s=>({...s,[p.id]:checked}));if(!checked)setGoals(s=>({...s,[p.id]:'0'}));}} aria-label={p.name+' participó'}/><label htmlFor={'present-'+p.id}>{p.name}</label><input aria-label={'Goles de '+p.name} type="number" min="0" max="99" value={goals[p.id]} disabled={!present[p.id]} onChange={e=>setGoals(s=>({...s,[p.id]:e.target.value}))}/></div>)}</div>{error&&<div className="validation" role="alert">{error}</div>}<div className="modal-note">La suma de los goles individuales debe coincidir con el marcador. Los datos no se comparten entre navegadores.</div><div className="modal-footer"><button type="button" className="secondary-btn" onClick={onClose}>Cancelar</button><button className="primary-btn" type="submit">{initial?'Actualizar partido':'Guardar partido'} <Icon name="arrow"/></button></div></form>;
 }
 export default function App() {
+ const [players,setPlayers]=useState<Player[]>(demoPlayers);
  const [matches,setMatches]=useState<Match[]>(loadMatches);
- const [view,setView]=useState<View>('overview');
+ const [seasons,setSeasons]=useState<Season[]>([]);
+ const [online,setOnline]=useState(false);
+ const [live,setLive]=useState(false);
+ const [admin,setAdmin]=useState(false);
+ const [view,setView]=useState<View>(new URLSearchParams(window.location.search).has('admin')?'settings':'overview');
  const [filter,setFilter]=useState<Filter>('all');
  const [selected,setSelected]=useState<string|null>(null);
  const [modal,setModal]=useState<ModalState>(null);
  const [toast,setToast]=useState('');
  const focusRef=useRef<HTMLElement|null>(null);
+ const goalkeeper=players.find(p=>p.role==='Portero')??demoPlayers[0]!;
+ async function refreshRemote(){
+  const snapshot=await loadPublicSnapshot();
+  if(!snapshot){setOnline(false);setLive(false);setPlayers(demoPlayers);setMatches(loadMatches());return;}
+  setOnline(true);setSeasons(snapshot.seasons);
+  if(snapshot.players.some(p=>p.role==='Portero')){setPlayers(snapshot.players);setMatches(snapshot.matches);setLive(true);}
+  else{setPlayers(demoPlayers);setMatches(loadMatches());setLive(false);}
+ }
+ useEffect(()=>{void refreshRemote();void adminSession().then(setAdmin);},[]);
  const sorted=useMemo(()=>[...matches].sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)),[matches]);
- const summary=useMemo(()=>teamMetrics(matches,players),[matches]);
- const ranking=useMemo(()=>leaderboard(players,matches),[matches]);
+ const summary=useMemo(()=>teamMetrics(matches,players),[matches,players]);
+ const ranking=useMemo(()=>leaderboard(players,matches),[matches,players]);
  const selectedMatch=sorted.find(m=>m.id===selected)??sorted[0];
  const athlete=modal?.kind==='profile'?players.find(p=>p.id===modal.id):undefined;
  function changeView(v:View) {setView(v);setModal(null);window.scrollTo({top:0,behavior:'auto'});}
@@ -84,10 +100,19 @@ export default function App() {
   window.setTimeout(()=>document.querySelector<HTMLElement>('[role="dialog"] button')?.focus(),0);
   return()=>{document.removeEventListener('keydown',onKey);document.body.style.overflow='';focusRef.current?.focus();};
  },[modal]);
- function save(m:Match) {
+ async function save(m:Match):Promise<boolean> {
+  if(online){
+   if(!admin)return false;
+   try{if(m.revision){await updateMatch(m);}else{await createMatch(m);}await refreshRemote();setFilter('all');setModal(null);changeView('matches');showMessage('Partido guardado en Cloudflare D1');return true;}
+   catch{return false;}
+  }
   const next=[m,...matches];
   if(!saveMatches(next))return false;
   setMatches(next);setSelected(m.id);setFilter('all');setModal(null);changeView('matches');showMessage('Partido añadido solo a este dispositivo');return true;
+ }
+ async function remove(id:string){
+  if(!admin||!online||!window.confirm('¿Eliminar este partido de la base compartida?'))return;
+  try{await deleteMatch(id);await refreshRemote();setSelected(null);showMessage('Partido eliminado');}catch{showMessage('No se pudo eliminar el partido');}
  }
  function details(id:string){setSelected(id);changeView('matches');}
  function reset(){if(!window.confirm('¿Restaurar los partidos ficticios? Se borrarán los añadidos en este dispositivo.'))return;const fresh=structuredClone(seedMatches);if(saveMatches(fresh)){setMatches(fresh);setSelected(null);setFilter('all');showMessage('Datos ficticios restaurados');}else showMessage('No se pudieron guardar los datos');}
