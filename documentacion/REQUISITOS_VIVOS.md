@@ -115,3 +115,11 @@ Cuentas para cada jugador, fotos reales, estadísticas de minutos o cambios de p
 - `GET https://develop-martes-fc.ali-tio.workers.dev/api/public/snapshot` → `HTTP/2 200`, `version=2`, `source=d1`, temporada `season-2026` activa, `players=[]`, `matches=[]`. Esto prueba la conexión real del Worker de Preview a una D1 migrada y funcional.
 - La evidencia se corresponde con `martes-fc-preview` por la configuración versionada `previews.d1_databases` y la migración remota previa; las respuestas no exponen el UUID (separación demostrada por configuración, no por un endpoint interno).
 - **No declarar aún publicada v0.2.0:** falta Cloudflare Access `/api/admin/*`, comprobaciones de escrituras y consulta desde dos navegadores, pruebas de privacidad, backups y migración exclusiva de producción.
+
+### Instrumentación segura de Access Preview (17-11-2026)
+
+- El propietario configuró variables en **Previews Base** y **develop**, pero `GET /api/admin/session` sigue devolviendo 401 después del login de Access.
+- Se incorpora en la feature `diagnose-access-preview-401` un código de denegación en Workers Observability que **no contiene secretos, emails, tokens ni claims JWT**. No cambia el contrato HTTP ni relaja la validación.
+- Se habilita observabilidad **solo en Preview**, sin cambiar la infraestructura de producción.
+- Criterio de aceptación: obtener el código de motivo real tras redeploy `develop`; corregir la causa precisa; comprobar `session.ok=true`; comprobar rechazo en incógnito y POST no autorizado; probar alta real únicamente en D1 Preview.
+- Estado RF-029: **validación automática en CI correcta; autenticación remota 401 pendiente de diagnóstico**.
