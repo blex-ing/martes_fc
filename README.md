@@ -1,69 +1,44 @@
 # MARTES FC · Estadísticas deportivas
 
-Dashboard **público** de estadísticas de un equipo amateur, con diseño Liquid Glass neón y vistas de equipo, partidos, goleadores y portería. El código es público; los nombres de jugadores y resultados de la demostración son **ficticios**.
+Dashboard público de un equipo amateur, con diseño Liquid Glass neón y datos ficticios. El código es público; la administración remota y los datos privados aún no existen.
 
-> **Estado:** v0.1.0 — prototipo estático mantenible, sin backend y sin cuentas. No hay resultados reales. Esta versión aún no está publicada en Cloudflare ni dispone de administración remota.
+**Stack de la aplicación:** React 19, TypeScript estricto y Vite. El registro de partidos en esta fase es local al navegador, no compartido.
 
-## Desarrollo y verificación (Node 22+; CI con Node 24)
+## Desarrollar
 
-```bash
-cd web
-npm ci --no-audit --no-fund
-npm run check
-npm test
-npm run build
-npm run dev
-```
+Necesitas Node.js 24 y npm.
 
-Abrir `http://127.0.0.1:4173`. `web/dist` contiene el build estático listo para revisar. El prototipo usa módulos JavaScript modernos, así que **no debe abrirse desde `file://`**: requiere un servidor HTTP.
+    cd web
+    npm ci --no-audit --no-fund
+    npm run check:public
+    npm run typecheck
+    npm run lint
+    npm test
+    npm run build
+    npm run dev
 
-## Estructura
+La web local aparece en http://127.0.0.1:4173. Las pruebas visuales se ejecutan con Playwright: npx playwright install chromium y npm run test:visual.
 
-```text
-.github/
-  workflows/ci.yml
-  workflows/publish-release.yml
-  workflows/cleanup-temporary-branches.yml
-  dependabot.yml
-  pull_request_template.md
-web/
-  index.html                 # App actual de demo
-  styles.css                 # Diseño Liquid Glass
-  app.js                     # UI demo (pendiente migración a React/TypeScript)
-  src/domain/stats.mjs       # Cálculos puros reutilizables
-  tests/stats.test.mjs       # Tests de reglas del dominio
-  scripts/                   # Build, dev y revisión de privacidad
-  package.json
-  package-lock.json
-  dist/                      # Compilación (ignorada por Git)
-documentacion/
-  ARQUITECTURA_Y_MANTENIMIENTO.md
-  FLUJO_GIT_Y_RELEASES.md
-  PRIVACIDAD_Y_DATOS.md
-  DESPLIEGUE_CLOUDFLARE.md
-  releases/v0.1.0.md
-wrangler.jsonc
-REQUISITOS.md
-CHANGELOG.md
-```
+## Arquitectura
 
-## Flujo Git
+- web/src/App.tsx — interfaz React, navegación, formularios y vistas.
+- web/src/domain/stats.ts — tipos, reglas y cálculos.
+- web/src/data/demo.ts — datos 100% inventados.
+- web/src/data/storage.ts — persistencia local validada y exportación JSON.
+- web/tests — dominio Node y pruebas Playwright.
+- web/styles.css — diseño responsive Liquid Glass.
+- .github/workflows — CI, releases y limpieza segura.
+- documentacion — arquitectura, gobierno, privacidad y guía Cloudflare.
 
-`feature/*` → PR a `develop` → CI/Preview → `release/vX.Y.Z` → PR a `master` → GitHub Release + tag → sincronización `master` a `develop`.
+## Gobierno del repositorio
 
-Solo `develop` y `master` son permanentes. Las ramas deben quedar protegidas por Pull Requests y checks. Las comprobaciones visuales se validarán de forma manual hasta instalar Playwright en la fase de migración.
+GitHub es la fuente de verdad. Solo master (estable) y develop (integración) son permanentes:
+feature/* → PR develop → release/vX.Y.Z → PR master → tag y GitHub Release → sincronizar master a develop.
 
-El diseño y los workflows se basan en el repositorio [`blex-ing/mini_podcast`](https://github.com/blex-ing/mini_podcast), **sin arrastrar funcionalidades Python del podcast**.
+El código es público; no se versionan teléfonos, capturas de chats privados, fotos no autorizadas, claves ni otros datos personales.
 
-## Datos públicos y privados
+## Despliegue
 
-- En el repositorio **no** se guardan contactos, capturas de mensajería, información financiera, contraseñas, tokens ni datos personales.
-- El prototipo muestra resultados y jugadores ficticios. Los cambios del formulario quedan solo en `localStorage`; cada navegador ve datos distintos.
-- En la fase multiusuario, **lectura pública de estadísticas publicadas** y **API de escritura autenticada**, con base de datos separada y autorización a nivel servidor.
-- Los nombres/fotos reales solo se incorporan cuando se acuerde su publicación con las personas afectadas; no introducir secretos ni datos internos en el frontend.
+Cloudflare Workers Builds será la plataforma, pero **todavía no está conectada ni desplegada**. Se configurará tras validar la integración de la aplicación.
 
-## Estado de la arquitectura
-
-Este repositorio inicia con una aplicación web **estática** que se puede probar ya. La migración propuesta es **React + Vite + TypeScript estricto**, manteniendo dominio separado y conectándolo después a un repositorio/API seguro. No se presenta esta migración como realizada: quedará en su propia feature y PR.
-
-Consulta las decisiones detalladas en [`documentacion/ARQUITECTURA_Y_MANTENIMIENTO.md`](documentacion/ARQUITECTURA_Y_MANTENIMIENTO.md).
+Lee [Requisitos](REQUISITOS.md), [Arquitectura](documentacion/ARQUITECTURA_Y_MANTENIMIENTO.md), [Flujo Git](documentacion/FLUJO_GIT_Y_RELEASES.md), [Privacidad](documentacion/PRIVACIDAD_Y_DATOS.md) y [Cloudflare](documentacion/DESPLIEGUE_CLOUDFLARE.md).
