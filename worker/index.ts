@@ -62,10 +62,12 @@ function textValue(v:unknown,max:number):string|null {
 }
 function idValue(v:unknown):v is string {return typeof v==='string'&&/^[a-zA-Z0-9-]{1,100}$/.test(v);}
 function num(v:unknown,max:number):v is number {return typeof v==='number'&&Number.isSafeInteger(v)&&v>=0&&v<=max;}
-function decodePart(value:string):Uint8Array {
+function decodePart(value:string):Uint8Array<ArrayBuffer> {
   const normalized=value.replace(/-/g,'+').replace(/_/g,'/');
   const decoded=atob(normalized.padEnd(Math.ceil(normalized.length/4)*4,'='));
-  return Uint8Array.from(decoded,c=>c.charCodeAt(0));
+  const bytes=new Uint8Array(decoded.length);
+  for(let i=0;i<decoded.length;i++)bytes[i]=decoded.charCodeAt(i);
+  return bytes;
 }
 function decodeJson(value:string):Record<string,unknown> {
   const decoded=new TextDecoder().decode(decodePart(value));
@@ -140,7 +142,7 @@ async function prepareMatch(db:Database,input:Json,id:string):Promise<{record:Ma
   if(!validateMatch(record,known,typeof goalkeeperId==='string'?goalkeeperId:'__none__'))return null;
   return {record:record as Match,seasonId};
 }
-function matchStatements(db:Database,m:Match,seasonId:string,id:string):Statement[] {
+function matchStatements(db:Database,m:Match,id:string):Statement[] {
   const stmts:Statement[]=[];
   for(const playerId of m.appearances){
     stmts.push(db.prepare('INSERT INTO match_players(match_id,player_id,goals) VALUES(?,?,?)')
@@ -226,7 +228,7 @@ async function adminApi(request:Request,db:Database,email:string,path:string):Pr
       const {record:m,seasonId}=valid;
       await db.batch([db.prepare('INSERT INTO matches(id,season_id,played_on,opponent,goals_for,goals_against,saves,goalkeeper_id) VALUES(?,?,?,?,?,?,?,?)')
         .bind(id,seasonId,m.date,m.opponent.trim(),m.goalsFor,m.goalsAgainst,m.saves,m.goalkeeperId),
-        ...matchStatements(db,m,seasonId,id),audit(db,email,'create','match',id)]);
+        ...matchStatements(db,m,id),audit(db,email,'create','match',id)]);
       return json({ok:true,id},201);
     }
     if(method==='PUT'&&matchRoute[1]){
@@ -241,7 +243,7 @@ async function adminApi(request:Request,db:Database,email:string,path:string):Pr
       await db.batch([db.prepare('UPDATE matches SET season_id=?,played_on=?,opponent=?,goals_for=?,goals_against=?,saves=?,goalkeeper_id=?,revision=revision+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND revision=?')
         .bind(seasonId,m.date,m.opponent.trim(),m.goalsFor,m.goalsAgainst,m.saves,m.goalkeeperId,id,old.revision),
         db.prepare('DELETE FROM match_players WHERE match_id=?').bind(id),
-        ...matchStatements(db,m,seasonId,id),audit(db,email,'update','match',id)]);
+        ...matchStatements(db,m,id),audit(db,email,'update','match',id)]);
       return json({ok:true,id,revision:old.revision+1});
     }
     if(method==='DELETE'&&matchRoute[1]){
