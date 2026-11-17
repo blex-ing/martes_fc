@@ -1,27 +1,11 @@
-# Dependencies/build/test
 node_modules/
-web/dist/
-coverage/
-playwright-report/
-test-results/
-*.log
-.cache/
-.DS_Store
-Thumbs.db
-
-# Sensitive / local
+dist/
 .env
 .env.*
 !.env.example
-*.pem
-*.key
-*.p12
-*.pfx
-*.sqlite
-*.db
-*.sqlite3
-*.local
-
-# IDE
-.idea/
-.vscode/
+*.log
+.DS_Store
+coverage/
+playwright-report/
+test-results/
+.vite/

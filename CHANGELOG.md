@@ -1,15 +1,9 @@
-# Registro de cambios
+# Changelog — MARTES FC
 
-## [Unreleased]
-
-### Planificado
-- Migración a React, Vite y TypeScript estricto, manteniendo la paridad funcional de la demo.
-- Pruebas de interfaz automatizadas y refactor del sistema de diseño en componentes reutilizables.
-- Backend con lectura pública y escritura protegida, cuando se apruebe el modelo de datos.
-
-## [0.1.0] — candidata, no publicada
-
-- Prototipo web con datos ficticios, tarjetas de equipo y perfil de jugadores.
-- Métricas de portero calculadas desde partidos.
-- Arquitectura inicial de mantenimiento y documentos de Git/CI/Cloudflare.
-- Tests unitarios de métricas y validación de datos.
+## v0.1.0 — Primer dashboard público
+- Migración a React 19, TypeScript estricto y Vite.
+- Vistas de equipo, partidos, jugadores, portería y ajustes de datos.
+- Datos ficticios y almacenamiento local; exportación JSON.
+- Pruebas de estadísticas, lint, compilación y QA visual Playwright.
+- Pipeline GitHub Actions, Dependabot y notas de release.
+- Preparación para Cloudflare, aún sin desplegar.
