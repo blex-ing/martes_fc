@@ -24,7 +24,7 @@ function Intro({eyebrow,title,accent,description,action}:{eyebrow:string;title:s
 }
 function Disclaimer({live,online}:{live:boolean;online:boolean}) {return <div className="disclaimer"><Icon name="info"/><span>{live?<><strong>Resultados compartidos.</strong> Datos cargados desde Cloudflare D1.</>:online?<><strong>Base de datos vacía.</strong> Se muestra una demo local hasta dar de alta al portero.</>:<><strong>Vista de demostración.</strong> Partidos y resultados ficticios. Los cambios se guardan solo en este dispositivo.</>}</span></div>;}
 function Metric({label,value,hint,icon,tone}:{label:string;value:number|string;hint:string;icon:string;tone:string}){
- return <div className={'metric glass tone-'+tone}><div className="metric-top"><span className="metric-label">{label}</span><span className="metric-icon"><Icon name={icon}/></span></div><div className="metric-value">{value}</div><div className="metric-hint">{hint}</div></div>;
+ return <div className={'metric glass ui-glass-card tone-'+tone}><div className="metric-top"><span className="metric-label">{label}</span><span className="metric-icon"><Icon name={icon}/></span></div><div className="metric-value">{value}</div><div className="metric-hint">{hint}</div></div>;
 }
 function MatchRow({m,onDetail}:{m:Match;onDetail:(id:string)=>void}) {
  const d=datePart(m.date),r=resultCode(m);
