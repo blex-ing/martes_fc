@@ -83,4 +83,10 @@ Cuentas para cada jugador, fotos reales, estadísticas de minutos o cambios de p
 - `previews.d1_databases` apunta solamente a `martes-fc-preview`; `wrangler.preview-migrations.jsonc` apunta a la misma D1 para migraciones remotas de pruebas.
 - La CI comprueba con `npm run check:d1` que los UUID de producción y preview no coinciden.
 - **Pendiente:** aplicar SQL a ambas D1, probar preview en Cloudflare, configurar Access y verificar escritura autorizada antes de completar RF-030 y publicar v0.2.0.
-\n### Evidencia de migración remota de PREVIEW (17-11-2026)\n- Origen: salida de Wrangler 4.164.0 ejecutado por el propietario desde GitHub Codespaces en rama `develop`.\n- `npx wrangler d1 migrations apply PREVIEW_DB --remote --config wrangler.preview-migrations.jsonc` ejecutó `0001_initial.sql` con estado ✅ en UUID `8242fd69-84d4-4630-b4c2-7b6d29550aeb`.\n- El `SELECT name FROM sqlite_master WHERE type='table' ORDER BY name` confirmó las cinco tablas de dominio: `seasons`, `players`, `matches`, `match_players`, `audit_events`.\n- **Alcance de la verificación:** solo estructura de `martes-fc-preview`. No se han verificado endpoint Worker, datos de jugador, Access, backups o la D1 de producción.\n- **Siguiente control:** resolver Worker Preview y comprobar `GET /api/public/snapshot` antes de promocionar a producción.\n
+
+### Evidencia de migración remota de PREVIEW (17-11-2026)
+- Origen: salida de Wrangler 4.164.0 ejecutado por el propietario desde GitHub Codespaces en rama `develop`.
+- `npx wrangler d1 migrations apply PREVIEW_DB --remote --config wrangler.preview-migrations.jsonc` ejecutó `0001_initial.sql` con estado ✅ en UUID `8242fd69-84d4-4630-b4c2-7b6d29550aeb`.
+- El `SELECT name FROM sqlite_master WHERE type='table' ORDER BY name` confirmó las cinco tablas de dominio: `seasons`, `players`, `matches`, `match_players`, `audit_events`.
+- **Alcance de la verificación:** solo estructura de `martes-fc-preview`. No se han verificado endpoint Worker, datos de jugador, Access, backups o la D1 de producción.
+- **Siguiente control:** resolver Worker Preview y comprobar `GET /api/public/snapshot` antes de promocionar a producción.
