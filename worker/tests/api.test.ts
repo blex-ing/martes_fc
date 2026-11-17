@@ -92,3 +92,23 @@ test('JWT firmado RS256 permite únicamente administrador autorizado y bloquea C
     assert.equal(unauthorized,null);
   }finally{globalThis.fetch=old;}
 });
+
+test('diagnóstico 401 registra solo categorías, nunca JWT ni secretos',async()=>{
+  const messages:string[]=[];
+  const original=console.warn;
+  console.warn=(...args:unknown[])=>{messages.push(args.join(' '));};
+  try{
+    const token='eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJ0ZXN0In0.fake';
+    const noToken=await verifyAdmin(request('/api/admin/session'),{});
+    assert.equal(noToken,null);
+    const noDomain=await verifyAdmin(request('/api/admin/session','GET',{'Cf-Access-Jwt-Assertion':token}),{
+      POLICY_AUD:'private-audience',ADMIN_EMAIL:'private@example.test'
+    });
+    assert.equal(noDomain,null);
+    assert.ok(messages.some(x=>x.includes('missing_access_token')));
+    assert.ok(messages.some(x=>x.includes('missing_team_domain')));
+    assert.ok(!messages.join(' ').includes(token));
+    assert.ok(!messages.join(' ').includes('private-audience'));
+    assert.ok(!messages.join(' ').includes('private@example.test'));
+  }finally{console.warn=original;}
+});
