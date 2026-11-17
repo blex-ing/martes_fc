@@ -21,7 +21,7 @@
  opacity:.6;
 }
 .ui-hybrid-glass > *{position:relative;z-index:1}
-.ui-hybrid-control{position:relative;isolation:isolate;transition:transform var(--motion-fast) ease,filter var(--motion-fast) ease}
+.ui-hybrid-control{position:relative;isolation:isolate;min-height:44px;transition:transform var(--motion-fast) ease,filter var(--motion-fast) ease}
 .ui-hybrid-control:focus-visible{outline:2px solid var(--glass-focus);outline-offset:3px}
 .ui-hybrid-control:active:not(:disabled){transform:scale(.985)}
 .ui-button:disabled,.ui-hybrid-control:disabled{cursor:not-allowed;opacity:.55}
