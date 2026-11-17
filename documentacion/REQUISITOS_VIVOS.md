@@ -16,7 +16,7 @@ Una web abierta con estadísticas deportivas del equipo MARTES FC. El código y 
 ## v0.2.0 — requisitos funcionales
 | ID | Capacidad / aceptación verificable | Prioridad | Estado y evidencia | Prueba objetivo |
 |---|---|---|---|---|
-| RF-020 | VIS obtiene jugadores y partidos publicados con un único GET, compartidos entre navegadores | P0 | Verificado en CI; E2E remoto pendiente | API: 200, contrato JSON, solo campos públicos |
+| RF-020 | VIS obtiene jugadores y partidos publicados con un único GET, compartidos entre navegadores | P0 | GET remoto Preview 200 con `source=d1`; sincronización entre navegadores y escritura pendientes | API: 200, contrato JSON, solo campos públicos |
 | RF-021 | Persistir jugadores con ID, alias público, rol (Portero/Jugador), colores de avatar y estado activo | P0 | Verificado en CI; E2E remoto pendiente | SQL constraints, endpoint |
 | RF-022 | Persistir partidos con fecha, rival, GF, GC, portero, paradas y temporada | P0 | Verificado en CI; E2E remoto pendiente | API + SQL |
 | RF-023 | Persistir participación por partido y goles individuales; suma goles = GF | P0 | Verificado en CI; E2E remoto pendiente | Test de dominio y rechazo 400 |
@@ -26,7 +26,7 @@ Una web abierta con estadísticas deportivas del equipo MARTES FC. El código y 
 | RF-027 | ADM edita y elimina partidos, actualiza plantilla; operaciones con trazabilidad | P1 | Verificado en CI; E2E remoto pendiente | API + auditoría |
 | RF-028 | Gestionar temporadas desde D1 (una activa inicialmente); consultar por temporada en futuro | P1 | Verificado en CI; E2E remoto pendiente | SQL FK y lectura |
 | RF-029 | ADM solo accede mediante JWT Cloudflare Access validado (firma, issuer, audience y correo autorizado) | P0 | Verificado en CI; E2E remoto pendiente | Tests negativos auth |
-| RF-030 | Separar D1 de producción y D1 de preview; nunca se reutiliza la D1 de producción en CI/preview | P0 | D1 PREVIEW con esquema aplicado y verificado; Worker Preview pendiente | `npm run check:d1` + Workers Preview real |
+| RF-030 | Separar D1 de producción y D1 de preview; nunca se reutiliza la D1 de producción en CI/preview | P0 | Binding `DB` Preview operativo, lectura SQL 200; aislamiento de escritura no comprobado | `npm run check:d1` + Workers Preview real |
 | RF-031 | Un administrador puede exportar datos públicos en JSON y el mantenimiento dispone de procedimiento de backup | P1 | En desarrollo: backup remoto pendiente | Pruebas export y runbook |
 | RF-032 | Nada de resultados reales ni nombres reales en las migraciones/fixtures públicas sin consentimiento previo | P0 | Verificado en CI; E2E remoto pendiente | check:public y revisión |
 | RF-033 | Mostrar fuente y estado de sincronización sin confundir datos demo, remotos o caídos | P0 | Verificado en CI; E2E remoto pendiente | QA móvil/desktop |
@@ -107,3 +107,11 @@ Cuentas para cada jugador, fotos reales, estadísticas de minutos o cambios de p
 - Se cierra **el bloqueo de compilación ENOENT**, no la aceptación E2E. El log no contiene un GET HTTP del endpoint ni validación de lectura D1; **RF-020 y RF-030 siguen pendientes de comprobar API y conexión a la base PREVIEW**.
 - Próximo ensayo externo sin credenciales: `curl -i https://develop-martes-fc.ali-tio.workers.dev/api/health` y `curl -i https://develop-martes-fc.ali-tio.workers.dev/api/public/snapshot`. Esperado 200; `health.configured=true`; `snapshot.source=d1`, temporada 2026 y arrays de jugadores/partidos vacíos inicialmente. No cargar nombres reales sin autorización.
 - Trabajos adicionales: Cloudflare Access y escrituras autorizadas, backups, migración de producción y release; `master` continúa en v0.1.1.
+
+### Prueba remota de API y D1 Preview completada (17-11-2026, 16:30 UTC)
+
+- Evidencia directa: transcripción aportada por el propietario desde Codespaces (rama `develop`); **no contiene secretos ni nombres personales**.
+- `GET https://develop-martes-fc.ali-tio.workers.dev/api/health` → `HTTP/2 200`, JSON `{"ok":true,"configured":true}`.
+- `GET https://develop-martes-fc.ali-tio.workers.dev/api/public/snapshot` → `HTTP/2 200`, `version=2`, `source=d1`, temporada `season-2026` activa, `players=[]`, `matches=[]`. Esto prueba la conexión real del Worker de Preview a una D1 migrada y funcional.
+- La evidencia se corresponde con `martes-fc-preview` por la configuración versionada `previews.d1_databases` y la migración remota previa; las respuestas no exponen el UUID (separación demostrada por configuración, no por un endpoint interno).
+- **No declarar aún publicada v0.2.0:** falta Cloudflare Access `/api/admin/*`, comprobaciones de escrituras y consulta desde dos navegadores, pruebas de privacidad, backups y migración exclusiva de producción.
