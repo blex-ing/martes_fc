@@ -117,3 +117,40 @@ La API y D1 Preview responden correctamente. **No se han probado escrituras, ses
 - Configurar variables de ejecución del **Worker Preview** (`TEAM_DOMAIN`, `POLICY_AUD`, `ADMIN_EMAIL`) fuera de Git. No confundir las variables de **Builds/Previews Base** con variables del runtime del Worker; verificar su disponibilidad real.
 - Validar la autenticación: `/api/admin/session` anónimo → desafío o 401; sesión válida → JSON `ok=true`, y `POST` con origen permitido modifica únicamente D1 Preview. Para validar el aislamiento comprobar que producción permanece sin datos de prueba.
 - Documentación de Cloudflare: https://developers.cloudflare.com/workers/configuration/cloudflare-access/ . La ubicación exacta de controles en UI puede variar.
+
+## Diagnóstico del 401 tras iniciar sesión (17-11-2026)
+
+El propietario ha confirmado que el endpoint público sigue devolviendo `source=d1`, que Cloudflare Access muestra inicio de sesión y que, después de autenticarse, `/api/admin/session` responde `{"error":"unauthorized","code":"unauthorized"}`. Además, ya creó `TEAM_DOMAIN`, `POLICY_AUD` y `ADMIN_EMAIL` en **Previews Base** y en la propia **Preview develop**. **No se deben crear de nuevo a ciegas**.
+
+### Qué comprobamos (sin revelar datos)
+La API verifica el JWT `Cf-Access-Jwt-Assertion` en servidor; no depende de `ctx.access`, que Cloudflare documenta como no disponible detrás del router de Static Assets.
+
+Desde esta feature, los rechazos dejan códigos **categóricos, sin valores sensibles**, en `console.warn('[martes-fc][access] denied:', code)`:
+
+| Mensaje de log | Qué revisar |
+|---|---|
+| `missing_access_token` | Cloudflare Access no ha entregado el encabezado JWT; revisar destino y sesión |
+| `missing_team_domain`, `missing_audience`, `missing_admin_email` | Variables no disponibles en tiempo de ejecución de `develop`; no confundir con variables de Builds |
+| `invalid_team_domain` | Usar exactamente `https://<equipo>.cloudflareaccess.com`, sin rutas ni barra final |
+| `issuer_mismatch` | `TEAM_DOMAIN` distinto del emisor del token |
+| `audience_mismatch` | `POLICY_AUD` debe ser el AUD de la **aplicación** Access, no el ID de la política |
+| `email_mismatch` | `ADMIN_EMAIL` no coincide con la cuenta autenticada |
+| `expired_token`, `invalid_token_time` | Sesión caducada o token temporal inválido; volver a iniciar sesión |
+| `certificates_unavailable`, `invalid_certificates`, `signing_key_not_found`, `invalid_signature`, `verification_exception` | Diagnosticar JWKS/firma sin debilitar autenticación |
+
+El HTTP público **seguirá devolviendo 401 genérico**. Nunca imprimir token, contenido JWT, email o secretos en logs.
+
+### Leer el diagnóstico (solo Preview)
+
+1. Integrar el PR de instrumentación en `develop`, confirmar que Cloudflare reconstruye `develop-martes-fc.ali-tio.workers.dev`.
+2. Worker `martes-fc` → seleccionar Preview **develop** → **Observability → Logs**. La instrumentación activa `previews.observability.logs` y no altera los logs de producción.
+3. En una ventana de incógnito iniciar sesión desde `https://develop-martes-fc.ali-tio.workers.dev/api/admin/session`.
+4. Buscar el aviso `[martes-fc][access] denied: ...` correspondiente a la petición. Compartir **solo el código de motivo** sin copiar otras líneas de logs, cookies, JWT ni variables.
+5. Corregir exactamente el valor o binding señalado; después repetir la prueba. No duplicar secretos ni pasar a `master` hasta lograr `GET /api/admin/session` autenticado y pruebas de escritura.
+
+Cloudflare documenta que **Previews Base secrets solo se heredan al crear nuevos previews**. Las modificaciones posteriores de Base no se propagan a previews ya existentes; una modificación específica de `develop` sí debe aplicarse a esa preview, pero tiene que ser una variable de *runtime* y estar en el despliegue activo.
+
+Fuentes:
+- https://developers.cloudflare.com/workers/previews/configuration/
+- https://developers.cloudflare.com/workers/previews/test-and-debug/
+- https://developers.cloudflare.com/workers/configuration/cloudflare-access/
