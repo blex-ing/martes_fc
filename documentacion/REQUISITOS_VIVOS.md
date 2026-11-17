@@ -26,7 +26,7 @@ Una web abierta con estadísticas deportivas del equipo MARTES FC. El código y 
 | RF-027 | ADM edita y elimina partidos, actualiza plantilla; operaciones con trazabilidad | P1 | Verificado en CI; E2E remoto pendiente | API + auditoría |
 | RF-028 | Gestionar temporadas desde D1 (una activa inicialmente); consultar por temporada en futuro | P1 | Verificado en CI; E2E remoto pendiente | SQL FK y lectura |
 | RF-029 | ADM solo accede mediante JWT Cloudflare Access validado (firma, issuer, audience y correo autorizado) | P0 | Verificado en CI; E2E remoto pendiente | Tests negativos auth |
-| RF-030 | Separar D1 de producción y D1 de preview; nunca se reutiliza la D1 de producción en CI/preview | P0 | Bloqueado: D1 preview/prod pendientes | Config y revisión |
+| RF-030 | Separar D1 de producción y D1 de preview; nunca se reutiliza la D1 de producción en CI/preview | P0 | Implementado en configuración; revisión remota pendiente | `npm run check:d1` + Workers Preview real |
 | RF-031 | Un administrador puede exportar datos públicos en JSON y el mantenimiento dispone de procedimiento de backup | P1 | En desarrollo: backup remoto pendiente | Pruebas export y runbook |
 | RF-032 | Nada de resultados reales ni nombres reales en las migraciones/fixtures públicas sin consentimiento previo | P0 | Verificado en CI; E2E remoto pendiente | check:public y revisión |
 | RF-033 | Mostrar fuente y estado de sincronización sin confundir datos demo, remotos o caídos | P0 | Verificado en CI; E2E remoto pendiente | QA móvil/desktop |
@@ -77,3 +77,9 @@ Cuentas para cada jugador, fotos reales, estadísticas de minutos o cambios de p
 - Configuración remota D1 y Access, E2E con usuarios reales y export/restore D1: **BLOQUEADOS** hasta disponer de recursos externos; no declarar la versión publicada.
 - Las pruebas de firma JWT incluyen una firma RS256 válida generada en test, cambios de audiencia y bloqueo por Origin. No sustituyen la prueba real con Cloudflare Access.
 - Al crear D1, actualizar filas RF-030/RF-031, enlazar evidencia de test remoto y PR de release; conservar este historial, no borrar las versiones anteriores.
+
+### Evidencia de la feature `configure-d1-bindings-v020` (17-11-2026)
+- El propietario creó `martes-fc-prod` y `martes-fc-preview` en el panel Cloudflare (captura verificada). Identificadores D1 públicos en `wrangler.jsonc`.
+- `previews.d1_databases` apunta solamente a `martes-fc-preview`; `wrangler.preview-migrations.jsonc` apunta a la misma D1 para migraciones remotas de pruebas.
+- La CI comprueba con `npm run check:d1` que los UUID de producción y preview no coinciden.
+- **Pendiente:** aplicar SQL a ambas D1, probar preview en Cloudflare, configurar Access y verificar escritura autorizada antes de completar RF-030 y publicar v0.2.0.
