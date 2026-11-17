@@ -23,3 +23,8 @@
 .admin-tools .admin-row span{min-width:0;overflow-wrap:anywhere}.admin-tools .admin-row .outline-btn{flex:none}
 .admin-match-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
 @media(max-width:480px){.admin-tools .admin-row{align-items:flex-start;flex-direction:column}.admin-tools .admin-row .outline-btn{align-self:flex-start}}
+
+/* Gestión de plantilla: acciones accesibles en escritorio y móvil. */
+.admin-tools .admin-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.admin-tools .admin-row>form{width:100%;min-width:0}
+@media(max-width:480px){.admin-tools .admin-actions{width:100%}}
