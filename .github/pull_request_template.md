@@ -20,3 +20,4 @@ Describe efectos secundarios, validaciones, migraciones (si aplica) y reversión
 - [ ] Requisitos / arquitectura actualizados cuando corresponde.
 - [ ] CHANGELOG actualizado cuando corresponde.
 - [ ] Nota `documentacion/releases/vX.Y.Z.md` incluida si es una release.
+\n## Requisitos vivos y trazabilidad\n- [ ] He actualizado `documentacion/REQUISITOS_VIVOS.md` con IDs, estado, pruebas y alcance, o he documentado por qué no aplica.\n- [ ] Para API/D1: migraciones SQL, contrato, permisos, rollback y entorno preview revisados.\n- [ ] Ningún dato real de jugadores o acceso administrativo se filtra al repositorio público.\n
