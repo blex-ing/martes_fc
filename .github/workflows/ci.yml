@@ -51,6 +51,7 @@ jobs:
               raise AssertionError('Expected SQL CHECK to reject negative score')
           PY
       - run: npm run build
+      - run: npm run check:no-picomatch
       - run: npm audit --audit-level=high
       - name: Validate documentation and versioned notes
         env:
