@@ -1,5 +1,7 @@
 # MARTES FC — Requisitos funcionales y no funcionales
 
+> **Documento histórico de base v0.1.** Las nuevas features, su estado de implementación y su trazabilidad viven en [documentacion/REQUISITOS_VIVOS.md](documentacion/REQUISITOS_VIVOS.md). La propuesta v0.2.0 se encuentra en [documentacion/PROPUESTA_V0.2.0.md](documentacion/PROPUESTA_V0.2.0.md). No editar solo este archivo al introducir funcionalidades nuevas.
+
 > **Versión:** borrador público 0.1 · **Fecha:** 17-11-2026. Datos de demostración completamente ficticios. El código se publicará en GitHub; los registros reales se almacenarán fuera del repositorio y solo se publicarán los datos expresamente destinados a estadísticas públicas.
 
 ## Visión
