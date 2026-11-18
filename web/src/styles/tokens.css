@@ -1,0 +1,45 @@
+/* MARTES FC — fuente única de tokens de diseño. No introducir colores en otros archivos nuevos. */
+:root{
+ color-scheme:dark;
+ --bg:#070a17;
+ --panel:rgba(17,23,45,.74);
+ --panel-solid:#101729;
+ --line:rgba(185,203,255,.115);
+ --text:#f4f7ff;
+ --muted:#8e9ab6;
+ --cyan:#24e6fa;
+ --pink:#f533e7;
+ --violet:#9165ff;
+ --green:#5de2a1;
+ --red:#ff728f;
+ --yellow:#ffcf77;
+ --shadow:0 25px 70px rgba(0,0,0,.23);
+ --font:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+ --display:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+ /* Nombres semánticos y escalas compartidas */
+ --color-background:var(--bg);
+ --color-surface:var(--panel);
+ --color-surface-solid:var(--panel-solid);
+ --color-border:var(--line);
+ --color-text:var(--text);
+ --color-text-muted:var(--muted);
+ --color-primary:var(--cyan);
+ --color-secondary:var(--violet);
+ --color-accent:var(--pink);
+ --color-success:var(--green);
+ --color-error:var(--red);
+ --color-warning:var(--yellow);
+ --space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;
+ --space-5:20px;--space-6:24px;--space-8:32px;--space-10:40px;--space-12:48px;
+ --radius-xs:7px;--radius-sm:11px;--radius-control:12px;
+ --radius-card:16px;--radius-panel:18px;--radius-shell:20px;--radius-pill:999px;
+ --motion-fast:150ms;--motion-normal:230ms;
+ --shadow-card:0 16px 45px rgba(0,0,0,.19);
+ --shadow-glass:var(--shadow);
+ --glass-blur:18px;
+ --glass-border:color-mix(in srgb,var(--color-primary) 18%,var(--color-border));
+ --glass-sheen:color-mix(in srgb,var(--color-text) 9%,transparent);
+ --glass-focus:var(--color-primary);
+ --glass-surface:color-mix(in srgb,var(--color-surface-solid) 74%,transparent);
+ --glass-glow:color-mix(in srgb,var(--color-secondary) 17%,transparent);
+}
