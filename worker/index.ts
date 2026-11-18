@@ -255,10 +255,22 @@ async function adminApi(request:Request,db:Database,email:string,path:string):Pr
       const valid=await prepareMatch(db,{...body,seasonId:body.seasonId??old.season_id},id);
       if(!valid)return err(400,'invalid_match');
       const {record:m,seasonId}=valid;
-      await db.batch([db.prepare('UPDATE matches SET season_id=?,played_on=?,opponent=?,goals_for=?,goals_against=?,saves=?,goalkeeper_id=?,revision=revision+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND revision=?')
-        .bind(seasonId,m.date,m.opponent.trim(),m.goalsFor,m.goalsAgainst,m.saves,m.goalkeeperId,id,old.revision),
-        db.prepare('DELETE FROM match_players WHERE match_id=?').bind(id),
-        ...matchStatements(db,m,id),audit(db,email,'update','match',id)]);
+      // D1 batch es transaccional: si el UPDATE optimista no toca exactamente una fila,
+      // el siguiente INSERT intenta violar CHECK(actor) y revierte toda la transacción.
+      // changes() debe ejecutarse inmediatamente después del UPDATE en la misma conexión.
+      try {
+        await db.batch([db.prepare('UPDATE matches SET season_id=?,played_on=?,opponent=?,goals_for=?,goals_against=?,saves=?,goalkeeper_id=?,revision=revision+1,updated_at=CURRENT_TIMESTAMP WHERE id=? AND revision=?')
+          .bind(seasonId,m.date,m.opponent.trim(),m.goalsFor,m.goalsAgainst,m.saves,m.goalkeeperId,id,old.revision),
+          db.prepare("INSERT INTO audit_events(id,actor,action,entity,entity_id) SELECT ?, '', 'revision_guard', 'match', ? WHERE changes()!=1")
+            .bind(crypto.randomUUID(),id),
+          db.prepare('DELETE FROM match_players WHERE match_id=?').bind(id),
+          ...matchStatements(db,m,id),audit(db,email,'update','match',id)]);
+      } catch(error) {
+        // Un conflicto concurrente es 409; otros errores transaccionales siguen siendo 503.
+        const current=await db.prepare('SELECT revision FROM matches WHERE id=?').bind(id).first<{revision:number}>();
+        if(!current||current.revision!==old.revision)return err(409,'stale_revision');
+        throw error;
+      }
       return json({ok:true,id,revision:old.revision+1});
     }
     if(method==='DELETE'&&matchRoute[1]){
