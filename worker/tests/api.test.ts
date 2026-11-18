@@ -35,6 +35,18 @@ test('sin D1 el snapshot falla de manera explícita',async()=>{
   const r=await handleApi(request('/api/public/snapshot'),{});
   assert.equal(r.status,503);assert.equal((await r.json()).code,'database_not_configured');
 });
+test('snapshot acota los participantes al mismo histórico de 2000 partidos',async()=>{
+ const queries:string[]=[];
+ const base=mockDatabase();
+ const db:Database={...base,prepare(sql:string){queries.push(sql);return base.prepare(sql);}};
+ const response=await handleApi(request('/api/public/snapshot'),{DB:db});
+ assert.equal(response.status,200);
+ const matchesQuery=queries.find(q=>q.includes('FROM matches WHERE published'));
+ const participants=queries.find(q=>q.includes('FROM match_players mp'));
+ assert.match(matchesQuery??'',/LIMIT 2000/);
+ assert.match(participants??'',/IN \(SELECT id FROM matches/);
+ assert.match(participants??'',/LIMIT 2000/);
+});
 test('snapshot devuelve solo datos autorizados en el contrato v2',async()=>{
   const r=await handleApi(request('/api/public/snapshot'),{DB:mockDatabase()});
   assert.equal(r.status,200);const data=await r.json();
