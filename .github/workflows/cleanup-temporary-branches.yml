@@ -46,3 +46,40 @@ jobs:
           fi
           echo '::error::Safe deletion failed; manual verification required'
           exit 1
+
+  legacy_cleanup:
+    name: Safely remove reviewed obsolete branches
+    # One-shot audit cleanup: only when issue #38's feature PR is merged to develop.
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.base.ref == 'develop' &&
+      github.event.pull_request.head.ref == 'feature/issue-38-maintenance-docs'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Delete four obsolete branches only at audited SHA
+        shell: bash
+        run: |
+          set -euo pipefail
+          while read -r name expected; do
+            remote_ref="refs/heads/$name"
+            actual="$(git ls-remote --heads origin "$remote_ref" | awk '{print $1}')"
+            if [ -z "$actual" ]; then
+              echo "Already absent: $name"
+              continue
+            fi
+            if [ "$actual" != "$expected" ]; then
+              echo "::warning::Preserving branch advanced after audit: $name"
+              continue
+            fi
+            git push --force-with-lease="$remote_ref:$expected" origin ":$remote_ref"
+            echo "Deleted safely: $name"
+          done <<'BRANCHES'
+          sync/v0.1.1 507756ba7b2e2d6665cc281ff1ad23ab64a346ed
+          feature/diagnose-access-preview-401 6ebddd4d058a3aea7affecbd56f2b6a28da6833e
+          feature/security-audit-controlled-exception 135bd7dfb81d2060b9e90ef77f7d06b28099fe59
+          feature/issue-31-season-goalkeeper-stats 89d6b28b757e37bd52ffd5fc5215b9952a125be4
+          BRANCHES
