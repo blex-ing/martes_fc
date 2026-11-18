@@ -35,3 +35,8 @@ for(const rule of ['prefers-reduced-transparency','prefers-reduced-motion','poin
  if(!primitives.includes(rule))throw new Error('Falta fallback '+rule);
 }
 console.log('Design System: tokens, materiales, accesibilidad y presupuesto de color legado OK.');
+
+const legacy=await readFile(path.join(root,'web/styles.css'),'utf8');
+for(const obsolete of ['.score-grid{','.score-stat{','.keeper-identity{','.keeper-avatar{','.keeper-information{']){
+ if(legacy.includes(obsolete))throw new Error('Regla visual obsoleta reapareció: '+obsolete);
+}
