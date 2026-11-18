@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import type { Player } from './domain/stats';
 import type { Season } from './data/api';
-import { createPlayer, updatePlayer, deletePlayer, createSeason, activateSeason } from './data/api';
+import { createPlayer, updatePlayer, deletePlayer, createSeason, activateSeason, describeApiError } from './data/api';
 type Props={online:boolean;authenticated:boolean;players:Player[];seasons:Season[];onRefresh:()=>Promise<void>;notify:(message:string)=>void};
 export default function AdminPanel({online,authenticated,players,seasons,onRefresh,notify}:Props){
  const [name,setName]=useState(''),[role,setRole]=useState<'Portero'|'Jugador'>('Jugador');
@@ -24,7 +24,7 @@ export default function AdminPanel({online,authenticated,players,seasons,onRefre
  async function perform(task:()=>Promise<void>,success:string) {
    setError('');setBusy(true);
    try{await task();await onRefresh();notify(success);return true;}
-   catch(e){const message=e instanceof Error?e.message:'No se pudo completar la operación';setError(message==='player_has_history'?'No se puede eliminar: el jugador tiene partidos registrados. Desactívalo si ya no participa.':message);return false;}
+   catch(e){setError(describeApiError(e));return false;}
    finally{setBusy(false);}
  }
  async function addPlayer(e:FormEvent<HTMLFormElement>){
