@@ -15,7 +15,7 @@ jobs:
       github.event.pull_request.merged == true &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       (
-        (github.event.pull_request.base.ref == 'develop' && startsWith(github.event.pull_request.head.ref, 'feature/')) ||
+        (github.event.pull_request.base.ref == 'develop' && (startsWith(github.event.pull_request.head.ref, 'feature/') || startsWith(github.event.pull_request.head.ref, 'fix/'))) ||
         (github.event.pull_request.base.ref == 'master' && startsWith(github.event.pull_request.head.ref, 'release/'))
       )
     permissions:
