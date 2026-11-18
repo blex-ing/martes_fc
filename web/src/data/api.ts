@@ -1,16 +1,21 @@
-import { validateMatch, type Match, type Player } from '../domain/stats';
+import { validateMatch, type Match, type Player } from '../domain/stats.ts';
 export interface Season {id:string;label:string;start:string;end:string|null;active:boolean}
 export interface Snapshot {version:2;source:'d1';updatedAt:string;seasons:Season[];players:Player[];matches:Match[]}
-export async function loadPublicSnapshot(): Promise<Snapshot|null> {
+export type SnapshotLoadResult = {mode:'live';snapshot:Snapshot}|{mode:'demo'}|{mode:'unavailable'};
+/** Fail visible: una avería D1 nunca se convierte silenciosamente en estadísticas ficticias. */
+export async function loadPublicSnapshotResult(): Promise<SnapshotLoadResult> {
   try {
     const res=await fetch('/api/public/snapshot',{headers:{Accept:'application/json'},cache:'no-store'});
-    if(!res.ok||!res.headers.get('Content-Type')?.includes('application/json'))return null;
+    const contentType=res.headers.get('Content-Type')??'';
+    // Servidor estático local sin Worker: no existe API. En ese caso se permite la demo.
+    if(res.status===404||(res.ok&&contentType.includes('text/html')))return {mode:'demo'};
+    if(!res.ok||!contentType.includes('application/json'))return {mode:'unavailable'};
     const raw:unknown=await res.json();
-    if(!raw||typeof raw!=='object')return null;
+    if(!raw||typeof raw!=='object')return {mode:'unavailable'};
     const s=raw as Partial<Snapshot>;
-    if(s.version!==2||s.source!=='d1'||!Array.isArray(s.players)||!Array.isArray(s.matches)||!Array.isArray(s.seasons))return null;
+    if(s.version!==2||s.source!=='d1'||!Array.isArray(s.players)||!Array.isArray(s.matches)||!Array.isArray(s.seasons))return {mode:'unavailable'};
     const all=s.players as Player[];
-    if(all.some(p=>typeof p.id!=='string'||typeof p.name!=='string'||(p.role!=='Portero'&&p.role!=='Jugador')))return null;
+    if(all.some(p=>typeof p.id!=='string'||typeof p.name!=='string'||(p.role!=='Portero'&&p.role!=='Jugador')))return {mode:'unavailable'};
     const ids=all.map(p=>p.id),keepers=new Set(all.filter(p=>p.role==='Portero').map(p=>p.id));
     const matches=(s.matches as unknown[]).filter((m):m is Match=>{
       if(!m||typeof m!=='object')return false;
@@ -18,9 +23,9 @@ export async function loadPublicSnapshot(): Promise<Snapshot|null> {
       return (candidate.goalkeeperId===null||keepers.has(candidate.goalkeeperId)) &&
         validateMatch(m,ids,candidate.goalkeeperId??'__none__');
     });
-    if(matches.length!==s.matches.length)return null;
-    return {...s,players:all,matches} as Snapshot;
-  }catch{return null;}
+    if(matches.length!==s.matches.length)return {mode:'unavailable'};
+    return {mode:'live',snapshot:{...s,players:all,matches} as Snapshot};
+  }catch{return {mode:'unavailable'};}
 }
 export async function adminSession():Promise<boolean>{
   try {
