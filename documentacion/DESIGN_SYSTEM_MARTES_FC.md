@@ -64,3 +64,15 @@ La versión `master` **v0.2.1** es la referencia visual aprobada por el propieta
 
 ## 7. Deuda controlada
 El stylesheet original aún contiene literales de color. Esta feature no los sustituye todos para evitar cambiar visualmente las pantallas ya publicadas. El nuevo presupuesto en CI impide aumentar la deuda y obliga a reutilizar tokens.
+
+## 8. Material avanzado aplicado a superficies existentes (opt-in controlado)
+
+El propietario solicitó extender el efecto Glass híbrido a la mayor parte de la aplicación sin cambiar los tamaños, las tipografías, los gradientes originales ni la jerarquía de master.
+
+- `ui-hybrid-glass`: aplicado a navegación lateral/móvil, hero, marcador principal, las cuatro KPI, paneles, tarjetas individuales, formularios administrativos y modal.
+- `ui-hybrid-control`: CTA de acción principal, también en Administración.
+- El mecanismo añade una capa especular estática y una línea de luz interior mediante pseudoelementos; **no sustituye** `background`, `border`, `font`, `padding` o `box-shadow` de componentes existentes.
+- No duplica `backdrop-filter` sobre el Glass preexistente; no activa un `requestAnimationFrame` ni seguimiento continuo del cursor.
+- En dispositivos táctiles la intensidad del reflejo se atenúa. Las preferencias de transparencia y movimiento reducidos siguen siendo prioritarias.
+- Las filas densas de datos, badges y textos permanecen sin superficies Glass adicionales: se preservan legibilidad y rendimiento.
+- La comprobación automática verifica presencia del material en tarjetas clave, estructura y tipografía aprobada. **La revisión visual de Safari iPhone sigue pendiente de una prueba en hardware real**.
