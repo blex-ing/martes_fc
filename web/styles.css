@@ -30,3 +30,21 @@
 .admin-tools .admin-actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .admin-tools .admin-row>form{width:100%;min-width:0}
 @media(max-width:480px){.admin-tools .admin-actions{width:100%}}
+
+/* Portería: separación de identidad, texto y eficacia; no reutilizar un emblema fijo como layout. */
+.keeper-hero{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:var(--space-6);row-gap:var(--space-4);min-width:0}
+.keeper-identity{display:flex;align-items:center;gap:var(--space-4);min-width:0}
+.keeper-avatar{flex:none}
+.keeper-information{min-width:0;overflow-wrap:anywhere}
+.keeper-information .keeper-badge{margin-top:0}
+.keeper-hero>.donut{width:130px;height:130px}
+.keeper-empty{display:grid;justify-items:start;gap:var(--space-3)}
+.keeper-empty>.icon{color:var(--color-primary);width:32px;height:32px}
+.keeper-empty h2,.keeper-empty p{margin:0}
+@media(max-width:700px){
+ .keeper-hero{grid-template-columns:minmax(0,1fr);justify-items:center;gap:var(--space-5);text-align:center;padding:var(--space-5)}
+ .keeper-identity{width:100%;justify-content:center;flex-wrap:wrap;gap:var(--space-3)}
+ .keeper-information{min-width:0}
+ .keeper-hero>.donut{margin:0 auto}
+}
+@media(max-width:380px){.keeper-avatar{width:70px;height:70px}}
