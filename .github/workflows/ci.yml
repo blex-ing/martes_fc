@@ -71,7 +71,8 @@ jobs:
 
   visual:
     name: Visual QA (Chromium)
-    runs-on: ubuntu-latest
+    # Nombre conservado por protección de ramas; incluye WebKit móvil.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: web
@@ -84,7 +85,7 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - run: npm ci --no-audit --no-fund
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:visual
       - name: Upload visual report and screenshots
         if: always()
