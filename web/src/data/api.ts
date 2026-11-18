@@ -1,4 +1,4 @@
-import { validateMatch, type Match, type Player } from '../domain/stats';
+import { validateMatch, type Match, type Player } from '../domain/stats.ts';
 export interface Season {id:string;label:string;start:string;end:string|null;active:boolean}
 export interface Snapshot {version:2;source:'d1';updatedAt:string;seasons:Season[];players:Player[];matches:Match[]}
 export type SnapshotLoadResult = {mode:'live';snapshot:Snapshot}|{mode:'demo'}|{mode:'unavailable'};
