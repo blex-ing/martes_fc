@@ -59,3 +59,6 @@
  .keeper-original-panels .keeper-teaser{justify-content:center}
 }
 @media(max-width:380px){.keeper-original-hero{padding:var(--space-4)}.keeper-original-hero .keeper-emblem{width:54px;height:54px}.keeper-original-hero .keeper-emblem .icon{width:29px;height:29px}}
+
+/* Navegación fija: nunca debe quedar debajo de tarjetas o luces decorativas en 320px. */
+@media(max-width:950px){.mobile-nav.ui-hybrid-glass{position:fixed;z-index:1000;isolation:isolate}}
