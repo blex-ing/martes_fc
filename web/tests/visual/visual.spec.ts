@@ -53,21 +53,39 @@ test('contrato visual de master: tipografía, marcador, identidad y tarjetas',as
  expect(details.fontToken).not.toContain('--color-background');
 });
 
-test('hybrid glass avanzado mantiene identidad y material común',async ({page})=>{
+test('Glass no modifica las capas y luces originales del hero y los KPI',async ({page})=>{
  await page.goto('/');
  await expect(page.locator('.sidebar.ui-hybrid-glass')).toHaveCount(1);
- await expect(page.locator('.hero.ui-hybrid-glass')).toHaveCount(1);
- await expect(page.locator('.metric.ui-hybrid-glass')).toHaveCount(4);
+ await expect(page.locator('.hero.ui-hybrid-glass')).toHaveCount(0);
+ await expect(page.locator('.hero-score.ui-hybrid-glass')).toHaveCount(0);
+ await expect(page.locator('.metric.ui-hybrid-glass')).toHaveCount(0);
+ await expect(page.locator('.metric.glass')).toHaveCount(4);
  await expect(page.locator('.panel.ui-hybrid-glass').first()).toBeVisible();
  await expect(page.locator('.primary-btn.ui-hybrid-control').first()).toBeVisible();
- const result=await page.evaluate(()=>{
-  const h=document.querySelector('.hero.ui-hybrid-glass');
-  if(!h)return null;
-  return {overlay:getComputedStyle(h,'::before').content,background:getComputedStyle(h).backgroundImage};
+ const surface=await page.evaluate(()=>{
+  const hero=document.querySelector('.hero');
+  const metric=document.querySelector('.metric');
+  if(!hero||!metric)throw new Error('Faltan las tarjetas originales');
+  const heroStyle=getComputedStyle(hero),lightA=getComputedStyle(hero,'::before'),lightB=getComputedStyle(hero,'::after');
+  const glow=getComputedStyle(metric,'::after');
+  return {
+   heroBackground:heroStyle.backgroundImage,
+   heroBeforeWidth:lightA.width,heroBeforeTop:lightA.top,heroBeforeRadius:lightA.borderRadius,
+   heroAfterWidth:lightB.width,heroAfterBottom:lightB.bottom,heroAfterRight:lightB.right,
+   metricGlowWidth:glow.width,metricGlowTop:glow.top,metricGlowFilter:glow.filter
+  };
  });
- expect(result).not.toBeNull();
- expect(result?.overlay).toBe('""');
- expect(result?.background).toContain('gradient');
+ expect(surface.heroBackground).toContain('radial-gradient');
+ expect(surface.heroBackground).toContain('linear-gradient');
+ expect(surface.heroBeforeWidth).toBe('300px');
+ expect(surface.heroBeforeTop).toBe('-90px');
+ expect(surface.heroBeforeRadius).toBe('50%');
+ expect(surface.heroAfterWidth).toBe('310px');
+ expect(surface.heroAfterBottom).toBe('-260px');
+ expect(surface.heroAfterRight).toBe('170px');
+ expect(surface.metricGlowWidth).toBe('70px');
+ expect(surface.metricGlowTop).toBe('-29px');
+ expect(surface.metricGlowFilter).toContain('blur(34px)');
 });
 
 test('portería conserva jerarquía original y dos paneles, sin solapamientos',async ({page},testInfo)=>{
