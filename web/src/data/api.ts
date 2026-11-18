@@ -28,7 +28,9 @@ export async function loadPublicSnapshotResult(): Promise<SnapshotLoadResult> {
   }catch{return {mode:'unavailable'};}
 }
 export class ApiError extends Error {
- constructor(public readonly code:string,public readonly status:number){super(code);this.name='ApiError';}
+ readonly code:string;
+ readonly status:number;
+ constructor(code:string,status:number){super(code);this.name='ApiError';this.code=code;this.status=status;}
 }
 /** Mensajes estables en español; nunca revelar detalles internos del Worker. */
 export function describeApiError(error:unknown):string{
