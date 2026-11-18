@@ -55,8 +55,8 @@ La skill swiftui-liquid-glass de OpenAI se refiere a APIs nativas de SwiftUI en 
 
 La versión `master` **v0.2.1** es la referencia visual aprobada por el propietario. El sistema de diseño documenta sus jerarquías; no debe reinterpretarlas sin una solicitud explícita.
 
-- Logo MARTES FC: tipografía de sistema, peso 800, 24 px; conservar la proporción, color, espaciado y tratamiento de acento.
-- Marcador principal: 41 px y peso 900; no reducir su importancia frente al escudo, rival o etiqueta del resultado.
+- Logo MARTES FC: tipografía de sistema, peso 800, 24 px en escritorio y 22 px en móvil; conservar la proporción, color, espaciado y tratamiento de acento.
+- Marcador principal: 41 px en escritorio y 34 px en pantallas pequeñas, peso 900; no reducir su importancia frente al escudo, rival o etiqueta del resultado.
 - Puntuaciones de listas: 19 px en resultados, 17 px en ranking; preservar el orden de lectura y las proporciones de las filas.
 - Mantener la paleta existente, densidad y contrastes de tarjetas. Las primitivas `ui-*` son **optativas** para componentes nuevos; no se inyectan masivamente en tarjetas, modal o navegación de `master`.
 - Antes de modificar una primitiva existente, contrastar capturas simultáneas con la misma fuente de datos, ancho de pantalla y estado de autenticación. Diferencias de texto o de acciones entre preview y producción pueden derivar de sus bases D1 o sesiones, no necesariamente del CSS.
