@@ -10,7 +10,7 @@ export default defineConfig({
   projects:[
     {name:'desktop-chromium',use:{...devices['Desktop Chrome'],viewport:{width:1440,height:900}}},
     {name:'tablet-chromium',use:{...devices['Desktop Chrome'],viewport:{width:768,height:1024},isMobile:true,hasTouch:true}},
-    {name:'compact-chromium',use:{...devices['Desktop Chrome'],viewport:{width:320,height:720},isMobile:true,hasTouch:true}},
+    {name:'compact-chromium',use:{...devices['iPhone 13'],defaultBrowserType:'chromium',viewport:{width:320,height:720}}},
     {name:'mobile-chromium',use:{...devices['iPhone 13'],defaultBrowserType:'chromium'}},
     {name:'mobile-webkit',use:{...devices['iPhone 13']}}
   ],
