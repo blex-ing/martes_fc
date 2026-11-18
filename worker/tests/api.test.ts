@@ -14,8 +14,8 @@ function mockDatabase():Database{
         let results:unknown[]=[];
         if(sql.includes('FROM seasons ORDER BY'))results=[{id:'season-2026',label:'2026',starts_on:'2026-01-01',ends_on:'2026-12-31',active:1}];
         else if(sql.includes('FROM players ORDER BY'))results=[{id:'p1',public_name:'Portero prueba',role:'Portero',initials:'PP',avatar_a:'#147aa3',avatar_b:'#6540a7',active:1}];
-        else if(sql.includes('FROM matches WHERE published'))results=[{id:'m1',season_id:'season-2026',played_on:'2026-11-10',opponent:'Equipo Prueba',goals_for:1,goals_against:0,saves:2,goalkeeper_id:'p1',revision:1}];
         else if(sql.includes('FROM match_players mp'))results=[{match_id:'m1',player_id:'p1',goals:1}];
+        else if(sql.includes('FROM matches WHERE published'))results=[{id:'m1',season_id:'season-2026',played_on:'2026-11-10',opponent:'Equipo Prueba',goals_for:1,goals_against:0,saves:2,goalkeeper_id:'p1',revision:1}];
         return {results:results as T[]};
       },
       async first<T>(){return null as T|null;},
@@ -34,6 +34,18 @@ test('health es público, informa configuración sin revelar detalles',async()=>
 test('sin D1 el snapshot falla de manera explícita',async()=>{
   const r=await handleApi(request('/api/public/snapshot'),{});
   assert.equal(r.status,503);assert.equal((await r.json()).code,'database_not_configured');
+});
+test('snapshot acota los participantes al mismo histórico de 2000 partidos',async()=>{
+ const queries:string[]=[];
+ const base=mockDatabase();
+ const db:Database={...base,prepare(sql:string){queries.push(sql);return base.prepare(sql);}};
+ const response=await handleApi(request('/api/public/snapshot'),{DB:db});
+ assert.equal(response.status,200);
+ const matchesQuery=queries.find(q=>q.includes('FROM matches WHERE published'));
+ const participants=queries.find(q=>q.includes('FROM match_players mp'));
+ assert.match(matchesQuery??'',/LIMIT 2000/);
+ assert.match(participants??'',/IN \(SELECT id FROM matches/);
+ assert.match(participants??'',/LIMIT 2000/);
 });
 test('snapshot devuelve solo datos autorizados en el contrato v2',async()=>{
   const r=await handleApi(request('/api/public/snapshot'),{DB:mockDatabase()});

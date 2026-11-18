@@ -155,3 +155,42 @@ test('demo original: ficha de jugador conserva historial y tres estadísticas',a
  await expect(dialog.locator('.profile-numbers > div')).toHaveCount(3);
  await expect(dialog.getByText('Goles / partido')).toBeVisible();
 });
+
+
+test('modal de partidos: botones accesibles con listas extensas y scroll independiente',async ({page})=>{
+ await page.goto('/');
+ await page.getByRole('button',{name:/Añadir partido/}).click();
+ const dialog=page.getByRole('dialog');
+ const footer=dialog.locator('.modal-footer');
+ const scroll=dialog.locator('.modal-scroll');
+ await expect(dialog).toBeVisible();
+ for(const count of [7,15,30,50]){
+  await scroll.evaluate((root,target)=>{
+   const list=root.querySelector('.goal-input-list');
+   if(!list)throw Error('Falta lista de jugadores');
+   const original=list.querySelector('.goal-input-row');
+   if(!original)throw Error('Falta fila original');
+   while(list.children.length<target)list.appendChild(original.cloneNode(true));
+   while(list.children.length>target)list.lastElementChild?.remove();
+  },count);
+  const bounds=await dialog.evaluate(node=>{
+   const s=node.querySelector('.modal-scroll')!,f=node.querySelector('.modal-footer')!,h=node.querySelector('.modal-head')!;
+   const a=s.getBoundingClientRect(),b=f.getBoundingClientRect(),c=h.getBoundingClientRect();
+   return {scrollHeight:s.scrollHeight,clientHeight:s.clientHeight,overflow:getComputedStyle(s).overflowY,footerTop:b.top,footerBottom:b.bottom,headBottom:c.bottom,scrollTop:a.top,viewportWidth:document.documentElement.clientWidth,bodyWidth:document.documentElement.scrollWidth};
+  });
+  expect(bounds.overflow).toBe('auto');
+  expect(bounds.scrollTop).toBeGreaterThanOrEqual(bounds.headBottom-1);
+  expect(bounds.footerTop).toBeGreaterThanOrEqual(bounds.scrollTop-1);
+  expect(bounds.footerBottom).toBeLessThanOrEqual(page.viewportSize()!.height+1);
+  expect(bounds.bodyWidth).toBeLessThanOrEqual(bounds.viewportWidth+1);
+  if(count===50){expect(bounds.scrollHeight).toBeGreaterThan(bounds.clientHeight);await scroll.evaluate(el=>{el.scrollTop=el.scrollHeight;});}
+  await expect(footer.getByRole('button',{name:/Guardar partido/})).toBeVisible();
+  await expect(footer.getByRole('button',{name:'Cancelar'})).toBeVisible();
+ }
+ await page.getByLabel('Equipo rival').fill('Rival demo');
+ await page.getByLabel('Goles a favor').fill('2');
+ await footer.getByRole('button',{name:/Guardar partido/}).click();
+ await expect(footer.getByRole('alert')).toContainText('suma de goles');
+ await page.keyboard.press('Escape');
+ await expect(dialog).toHaveCount(0);
+});

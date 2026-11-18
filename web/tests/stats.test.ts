@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isValidDate,validateMatch,resultCode,teamMetrics,seasonMatches,playerMetrics,leaderboard } from '../src/domain/stats.ts';
+import { isValidDate,validateMatch,resultCode,teamMetrics,seasonMatches,playerMetrics,metricsByPlayer,leaderboard } from '../src/domain/stats.ts';
 import {players,seedMatches} from '../src/data/demo.ts';
 test('fechas válidas y calendario',()=>{
  assert.equal(isValidDate('2026-02-29'),false);assert.equal(isValidDate('2024-02-29'),true);
@@ -37,4 +37,15 @@ test('estadísticas globales de portería suman varios porteros por partido',()=
  const data=teamMetrics([...two,match],[...players,other]);
  assert.equal(data.keeper.saves,teamMetrics(two,players).keeper.saves+match.saves);
  assert.equal(data.keeper.keeperPlayed,teamMetrics(two,players).keeper.keeperPlayed+1);
+});
+
+test('índice de métricas equivale al cálculo original para todos los jugadores',()=>{
+ const indexed=metricsByPlayer(players,seedMatches);
+ for(const player of players)assert.deepEqual(indexed.get(player.id),playerMetrics(player,seedMatches));
+ assert.equal(leaderboard(players,seedMatches)[0]?.goals,indexed.get(leaderboard(players,seedMatches)[0]!.p.id)?.goals);
+});
+test('histórico voluminoso mantiene estadísticas sin filtrar cada jugador',()=>{
+ const bulk=Array.from({length:2000},(_,i)=>({...seedMatches[i%seedMatches.length]!,id:'test-'+i}));
+ const indexed=metricsByPlayer(players,bulk);
+ for(const player of players)assert.deepEqual(indexed.get(player.id),playerMetrics(player,bulk));
 });
