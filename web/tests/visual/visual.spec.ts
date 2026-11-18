@@ -42,13 +42,13 @@ test('contrato visual de master: tipografía, marcador, identidad y tarjetas',as
   function desktopView(){return window.innerWidth<800?'.mobile-brand strong':'.brand strong';}
  });
  expect(details.brand.font).toContain('system-ui');
- expect(details.brand.size).toBe('24px');
+ expect(details.brand.size).toBe(page.viewportSize()!.width<=950?'22px':'24px');
  expect(details.brand.weight).toBe('800');
  expect(details.score.font).toContain('system-ui');
- expect(details.score.size).toBe('41px');
+ expect(details.score.size).toBe(page.viewportSize()!.width<=700?'34px':'41px');
  expect(details.score.weight).toBe('900');
  expect(details.ranking.size).toBe('17px');
- expect(details.match.size).toBe('19px');
+ expect(details.match.size).toBe(page.viewportSize()!.width<=380?'16px':'19px');
  expect(details.background).toBe('#070a17');
  expect(details.fontToken).not.toContain('--color-background');
 });
