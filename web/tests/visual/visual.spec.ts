@@ -48,7 +48,24 @@ test('contrato visual de master: tipografía, marcador, identidad y tarjetas',as
  expect(details.score.size).toBe(page.viewportSize()!.width<=700?'34px':'41px');
  expect(details.score.weight).toBe('900');
  expect(details.ranking.size).toBe('17px');
- expect(details.match.size).toBe(page.viewportSize()!.width<=380?'16px':'19px');
+ expect(details.match.size).toBe(page.viewportSize()!.width<=700?(page.viewportSize()!.width<=380?'16px':'17px'):'19px');
  expect(details.background).toBe('#070a17');
  expect(details.fontToken).not.toContain('--color-background');
+});
+
+test('hybrid glass avanzado mantiene identidad y material común',async ({page})=>{
+ await page.goto('/');
+ await expect(page.locator('.sidebar.ui-hybrid-glass')).toHaveCount(1);
+ await expect(page.locator('.hero.ui-hybrid-glass')).toHaveCount(1);
+ await expect(page.locator('.metric.ui-hybrid-glass')).toHaveCount(4);
+ await expect(page.locator('.panel.ui-hybrid-glass').first()).toBeVisible();
+ await expect(page.locator('.primary-btn.ui-hybrid-control').first()).toBeVisible();
+ const result=await page.evaluate(()=>{
+  const h=document.querySelector('.hero.ui-hybrid-glass');
+  if(!h)return null;
+  return {overlay:getComputedStyle(h,'::before').content,background:getComputedStyle(h).backgroundImage};
+ });
+ expect(result).not.toBeNull();
+ expect(result?.overlay).toBe('""');
+ expect(result?.background).toContain('gradient');
 });
