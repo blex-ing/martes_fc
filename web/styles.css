@@ -48,3 +48,27 @@
  .keeper-hero>.donut{margin:0 auto}
 }
 @media(max-width:380px){.keeper-avatar{width:70px;height:70px}}
+
+/* Restauración del contrato de la demo HTML original — Portería / partido. */
+.keeper-original-hero{display:flex;align-items:center;gap:var(--space-4);min-width:0}
+.keeper-original-hero .keeper-emblem{flex:none}
+.keeper-original-hero .keeper-original-identity{min-width:0;overflow-wrap:anywhere}
+.keeper-original-kicker{margin-bottom:5px}
+.keeper-original-hero .keeper-badge{margin-top:var(--space-2)}
+.keeper-original-hero .keeper-badge .icon{width:14px;height:14px}
+.keeper-original-metrics{margin-top:17px}
+.keeper-original-panels .panel{min-width:0}
+.keeper-original-panels .bar-footer{gap:var(--space-3);flex-wrap:wrap}
+.keeper-original-panels .keeper-teaser{min-width:0;flex-wrap:wrap}
+.keeper-original-panels .keeper-details{min-width:145px}
+.keeper-methodology{margin-top:18px}
+.match-detail-caption{font-size:11px;margin-bottom:8px}
+.keeper-score-restore{margin-bottom:20px}
+.match-muted{font-size:11px;color:var(--muted)}
+.match-participants{font-size:11px;line-height:1.9;overflow-wrap:anywhere}
+@media(max-width:700px){
+ .keeper-original-hero{flex-direction:row;align-items:center;text-align:left;justify-content:flex-start;gap:var(--space-3)}
+ .keeper-original-hero .keeper-emblem{width:68px;height:68px}
+ .keeper-original-panels .keeper-teaser{justify-content:center}
+}
+@media(max-width:380px){.keeper-original-hero{padding:var(--space-4)}.keeper-original-hero .keeper-emblem{width:54px;height:54px}.keeper-original-hero .keeper-emblem .icon{width:29px;height:29px}}
