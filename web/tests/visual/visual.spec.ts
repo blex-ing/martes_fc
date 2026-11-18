@@ -69,3 +69,43 @@ test('hybrid glass avanzado mantiene identidad y material común',async ({page})
  expect(result?.overlay).toBe('""');
  expect(result?.background).toContain('gradient');
 });
+
+test('portería ordena avatar, identidad y porcentaje sin solapamientos',async ({page},testInfo)=>{
+ await page.goto('/');
+ const mobile=(page.viewportSize()?.width??0)<800;
+ if(mobile)await page.getByRole('navigation',{name:'Navegación móvil'}).getByRole('button',{name:'Portería'}).click();
+ else await page.getByRole('navigation',{name:'Secciones'}).getByRole('button',{name:/Portería/}).click();
+ const hero=page.locator('.keeper-hero');
+ await expect(hero).toBeVisible();
+ await expect(hero.locator('.keeper-avatar')).toHaveCount(1);
+ await expect(hero.locator('.keeper-information h2')).toHaveText('Portero demo');
+ await expect(hero.locator('.donut')).toHaveCount(1);
+ const bounds=await hero.evaluate(element=>{
+  function box(selector:string){const e=element.querySelector(selector);if(!e)throw Error('Elemento ausente '+selector);return e.getBoundingClientRect().toJSON();}
+  return {hero:element.getBoundingClientRect().toJSON(),avatar:box('.keeper-avatar'),identity:box('.keeper-identity'),text:box('.keeper-information'),donut:box('.donut')};
+ });
+ function intersects(a:{left:number;right:number;top:number;bottom:number},b:{left:number;right:number;top:number;bottom:number}){return a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;}
+ expect(intersects(bounds.avatar,bounds.text)).toBe(false);
+ expect(intersects(bounds.identity,bounds.donut)).toBe(false);
+ expect(bounds.avatar.left).toBeGreaterThanOrEqual(bounds.hero.left-1);
+ expect(bounds.donut.right).toBeLessThanOrEqual(bounds.hero.right+1);
+ expect(bounds.donut.bottom).toBeLessThanOrEqual(bounds.hero.bottom+1);
+ await page.screenshot({path:testInfo.outputPath('goalkeeper.png'),fullPage:true});
+});
+test('D1 sin portero muestra estado vacío real, no portero demo',async ({page})=>{
+ await page.route('**/api/public/snapshot',async route=>{
+  await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+   version:2,source:'d1',updatedAt:new Date().toISOString(),seasons:[],
+   players:[{id:'real-player',name:'Jugador Real',role:'Jugador',initials:'JR',a:'#147aa3',b:'#6540a7',active:true}],
+   matches:[]
+  })});
+ });
+ await page.goto('/');
+ const mobile=(page.viewportSize()?.width??0)<800;
+ if(mobile)await page.getByRole('navigation',{name:'Navegación móvil'}).getByRole('button',{name:'Portería'}).click();
+ else await page.getByRole('navigation',{name:'Secciones'}).getByRole('button',{name:/Portería/}).click();
+ await expect(page.getByRole('heading',{name:'Sin portero registrado'})).toBeVisible();
+ await expect(page.locator('.keeper-hero')).toHaveCount(0);
+ await expect(page.getByText('Portero demo')).toHaveCount(0);
+ await expect(page.getByText('La plantilla de Cloudflare D1 todavía no tiene un portero.')).toBeVisible();
+});
