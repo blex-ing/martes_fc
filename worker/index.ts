@@ -112,7 +112,7 @@ async function snapshot(db:Database):Promise<unknown> {
     db.prepare('SELECT id,label,starts_on,ends_on,active FROM seasons ORDER BY starts_on DESC').all<SeasonRow>(),
     db.prepare('SELECT id,public_name,role,initials,avatar_a,avatar_b,active FROM players ORDER BY created_at,id').all<PlayerRow>(),
     db.prepare('SELECT id,season_id,played_on,opponent,goals_for,goals_against,saves,goalkeeper_id,revision FROM matches WHERE published=1 AND status=? ORDER BY played_on DESC,id DESC LIMIT 2000').bind('finished').all<MatchRow>(),
-    db.prepare('SELECT mp.match_id,mp.player_id,mp.goals FROM match_players mp JOIN matches m ON m.id=mp.match_id WHERE m.published=1 AND m.status=?').bind('finished').all<AppearanceRow>()
+    db.prepare('SELECT mp.match_id,mp.player_id,mp.goals FROM match_players mp WHERE mp.match_id IN (SELECT id FROM matches WHERE published=1 AND status=? ORDER BY played_on DESC,id DESC LIMIT 2000)').bind('finished').all<AppearanceRow>()
   ]);
   const byMatch=new Map<string,AppearanceRow[]>();
   for(const app of appearances.results){const list=byMatch.get(app.match_id)??[];list.push(app);byMatch.set(app.match_id,list);}

@@ -72,7 +72,27 @@ export function teamMetrics(matches: readonly Match[], _players: readonly Player
     draws:finished.filter(m=>resultCode(m)==='draw').length,
     losses:finished.filter(m=>resultCode(m)==='loss').length,gf,ga,diff:gf-ga,keeper};
 }
+/** Un único recorrido sobre encuentros y participantes, en vez de un filtrado por cada jugador. */
+export function metricsByPlayer(players:readonly Player[],matches:readonly Match[]):Map<string,PlayerStats>{
+ const result=new Map<string,PlayerStats>(players.map(p=>[p.id,emptyStats()]));
+ for(const match of matches){
+  if(match.status!=='finished')continue;
+  for(const id of match.appearances){
+   const current=result.get(id);if(!current)continue;
+   current.played++;current.goals+=match.goals[id]??0;
+  }
+  if(match.goalkeeperId){
+   const current=result.get(match.goalkeeperId);
+   if(current){current.keeperPlayed++;current.saves+=match.saves;current.conceded+=match.goalsAgainst;
+     if(match.goalsAgainst===0)current.clean++;}
+  }
+ }
+ for(const current of result.values())current.rate=current.saves+current.conceded?
+  Math.round(100*current.saves/(current.saves+current.conceded)):0;
+ return result;
+}
 export function leaderboard(players: readonly Player[],matches: readonly Match[]) {
-  return players.map(p=>({p,...playerMetrics(p,matches)}))
+  const indexed=metricsByPlayer(players,matches);
+  return players.map(p=>({p,...indexed.get(p.id)!}))
     .sort((a,b)=>b.goals-a.goals || b.played-a.played || a.p.name.localeCompare(b.p.name,'es'));
 }
