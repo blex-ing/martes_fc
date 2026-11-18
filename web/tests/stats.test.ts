@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isValidDate,validateMatch,resultCode,teamMetrics,playerMetrics,leaderboard } from '../src/domain/stats.ts';
+import { isValidDate,validateMatch,resultCode,teamMetrics,seasonMatches,playerMetrics,leaderboard } from '../src/domain/stats.ts';
 import {players,seedMatches} from '../src/data/demo.ts';
 test('fechas válidas y calendario',()=>{
  assert.equal(isValidDate('2026-02-29'),false);assert.equal(isValidDate('2024-02-29'),true);
@@ -22,3 +22,19 @@ test('validar partido y evitar goles no asignados',()=>{
  m.goalsFor++;assert.equal(validateMatch(m,players.map(x=>x.id)),false);
 });
 test('resultados',()=>{assert.equal(resultCode(seedMatches[0]!),'win');assert.equal(resultCode(seedMatches[1]!),'loss');});
+
+test('temporada activa aísla resultados sin perder histórico',()=>{
+ const original=seedMatches.map((m,i)=>({...m,seasonId:i===0?'season-2026':'season-2027'}));
+ assert.equal(seasonMatches(original,'season-2026').length,1);
+ assert.equal(seasonMatches(original,'season-2027').length,2);
+ assert.equal(seasonMatches(original,null).length,3);
+ assert.equal(teamMetrics(seasonMatches(original,'season-2026'),players).played,1);
+});
+test('estadísticas globales de portería suman varios porteros por partido',()=>{
+ const two=structuredClone(seedMatches);
+ const other={...players[1]!,role:'Portero' as const,id:'portero-2'};
+ const match={...two[0]!,id:'otro',goalkeeperId:other.id,appearances:[other.id],goals:{[other.id]:two[0]!.goalsFor}};
+ const data=teamMetrics([...two,match],[...players,other]);
+ assert.equal(data.keeper.saves,teamMetrics(two,players).keeper.saves+match.saves);
+ assert.equal(data.keeper.keeperPlayed,teamMetrics(two,players).keeper.keeperPlayed+1);
+});
