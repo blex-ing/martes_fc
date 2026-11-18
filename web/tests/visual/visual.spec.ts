@@ -11,7 +11,7 @@ test('navegación a jugadores y ficha individual',async ({page})=>{
  const mobile=page.viewportSize()!.width<800;
  if(mobile) await page.getByRole('navigation',{name:'Navegación móvil'}).getByRole('button',{name:'Jugadores'}).click();
  else await page.getByRole('navigation',{name:'Secciones'}).getByRole('button',{name:/Jugadores/}).click();
- await expect(page.getByRole('heading',{name:/Cada jugador/})).toBeVisible();
+ await expect(page.getByRole('heading',{name:/Los que hacen/})).toBeVisible();
  await page.getByRole('button',{name:/Ver estadísticas de Jugador 1/}).click();
  await expect(page.getByRole('dialog')).toBeVisible();
  await page.getByRole('button',{name:'Cerrar'}).click();
