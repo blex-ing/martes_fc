@@ -59,3 +59,13 @@
  .keeper-original-panels .keeper-teaser{justify-content:center}
 }
 @media(max-width:380px){.keeper-original-hero{padding:var(--space-4)}.keeper-original-hero .keeper-emblem{width:54px;height:54px}.keeper-original-hero .keeper-emblem .icon{width:29px;height:29px}}
+
+/* Modal de partidos: cabecera y acciones persistentes; solo el cuerpo desplaza. */
+.modal.match-modal{display:flex;flex-direction:column;max-height:min(90dvh,850px);overflow:hidden;padding-bottom:max(24px,env(safe-area-inset-bottom))}
+.match-modal .modal-head{flex:0 0 auto}
+.match-modal #addMatchForm{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+.match-modal .modal-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable}
+.match-modal .modal-footer{flex:0 0 auto;display:flex;flex-direction:column;align-items:stretch;gap:9px;margin-top:12px}
+.match-modal .modal-actions{display:flex;justify-content:flex-end;gap:9px}
+.match-modal .modal-footer .validation{margin:0;max-height:5em;overflow-y:auto}
+@media(max-width:700px){.modal.match-modal{max-height:calc(100dvh - 16px);padding-bottom:max(19px,env(safe-area-inset-bottom))}}
