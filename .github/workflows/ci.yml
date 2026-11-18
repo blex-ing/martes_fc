@@ -26,6 +26,7 @@ jobs:
           package-manager-cache: false
       - run: npm ci --no-audit --no-fund
       - run: npm run check:public
+      - run: npm run check:design
       - run: npm run check:d1
       - run: npm run typecheck
       - run: npm run typecheck:worker
