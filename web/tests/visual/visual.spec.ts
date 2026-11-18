@@ -9,6 +9,16 @@ test('dashboard carga datos de demostración en escritorio y móvil',async ({pag
 test('navegación a jugadores y ficha individual',async ({page})=>{
  await page.goto('/');
  const mobile=page.viewportSize()!.width<800;
+ if(mobile&&page.viewportSize()!.width<=320){
+  const geometry=await page.evaluate(()=>{
+   const nav=document.querySelector<HTMLElement>('.mobile-nav')!;
+   const button=[...nav.querySelectorAll('button')].find(el=>el.textContent?.includes('Jugadores'))!;
+   const r=button.getBoundingClientRect(),n=nav.getBoundingClientRect(),s=getComputedStyle(nav);
+   const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);
+   return {viewport:{width:window.innerWidth,height:window.innerHeight,visualHeight:window.visualViewport?.height},nav:{x:n.x,y:n.y,width:n.width,height:n.height,position:s.position,zIndex:s.zIndex,display:s.display},button:{x:r.x,y:r.y,width:r.width,height:r.height},hit:{tag:hit?.tagName,className:hit?.getAttribute('class'),text:hit?.textContent?.slice(0,35)}};
+  });
+  console.log('COMPACT_NAV_DIAG',JSON.stringify(geometry));
+ }
  if(mobile) await page.getByRole('navigation',{name:'Navegación móvil'}).getByRole('button',{name:'Jugadores'}).click();
  else await page.getByRole('navigation',{name:'Secciones'}).getByRole('button',{name:/Jugadores/}).click();
  await expect(page.getByRole('heading',{name:/Los que hacen/})).toBeVisible();
