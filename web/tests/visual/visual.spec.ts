@@ -155,3 +155,43 @@ test('demo original: ficha de jugador conserva historial y tres estadísticas',a
  await expect(dialog.locator('.profile-numbers > div')).toHaveCount(3);
  await expect(dialog.getByText('Goles / partido')).toBeVisible();
 });
+
+test('responsive: cinco vistas sin desbordamiento horizontal de documento',async ({page})=>{
+ await page.goto('/');
+ const sections=[['overview','Inicio'],['matches','Partidos'],['players','Jugadores'],['goalkeeper','Portería']];
+ for(const [section,label] of sections){
+  if(section!=='overview'){
+   const mobile=page.viewportSize()!.width<800;
+   if(mobile)await page.getByRole('navigation',{name:'Navegación móvil'}).getByRole('button',{name:label}).click();
+   else await page.getByRole('navigation',{name:'Secciones'}).getByRole('button',{name:label==='Inicio'?/Resumen/:new RegExp(label)}).click();
+  }
+  await expect(page.locator('main h1')).toBeVisible();
+  const measures=await page.evaluate(()=>({scroll:document.documentElement.scrollWidth,screen:window.innerWidth}));
+  expect(measures.scroll,section+' produce overflow').toBeLessThanOrEqual(measures.screen+2);
+ }
+});
+test('modal permite teclado y selecciona controles sin perder foco',async ({page})=>{
+ await page.goto('/');
+ await page.getByRole('button',{name:/Añadir partido/}).click();
+ const dialog=page.getByRole('dialog');
+ await expect(dialog).toBeVisible();
+ const opponent=dialog.getByLabel('Equipo rival');
+ await opponent.focus();
+ await page.keyboard.press('Tab');
+ await expect(dialog.getByLabel('Goles a favor')).toBeFocused();
+ await page.keyboard.press('Escape');
+ await expect(dialog).toHaveCount(0);
+});
+test('indisponibilidad D1 no permite restaurar demo ni publicar resultados ficticios',async ({page})=>{
+ await page.route('**/api/public/snapshot',async route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({code:'database_unavailable'})}));
+ await page.goto('/');
+ await expect(page.getByText('Servicio temporalmente no disponible.')).toBeVisible();
+ await expect(page.getByText('Resultados ficticios. Tu navegador guarda los cambios de prueba.')).toHaveCount(0);
+ await expect(page.getByRole('button',{name:/Añadir partido/})).toHaveCount(0);
+});
+test('preferencia reduce-motion desactiva animaciones de los controles',async ({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await page.goto('/');
+ const duration=await page.locator('.primary-btn.ui-hybrid-control').first().evaluate(node=>getComputedStyle(node).transitionDuration);
+ expect(duration).toBe('0s');
+});
