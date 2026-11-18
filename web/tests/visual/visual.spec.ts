@@ -32,3 +32,23 @@ test('metadatos accesibles para compartir la demo pública',async ({page})=>{
  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute('content','MARTES FC · Estadísticas');
  await expect(page.locator('meta[name="color-scheme"]')).toHaveAttribute('content','dark');
 });
+
+test('contrato visual de master: tipografía, marcador, identidad y tarjetas',async ({page})=>{
+ await page.goto('/');
+ const details=await page.evaluate(()=>{
+  const css=(selector:string)=>{const node=document.querySelector(selector);if(!node)throw new Error('Falta '+selector);const s=getComputedStyle(node);return {font:s.fontFamily,size:s.fontSize,weight:s.fontWeight,border:s.borderRadius};};
+  const root=getComputedStyle(document.documentElement);
+  return {brand:css(desktopView()),score:css('.hero-scoreline'),ranking:css('.bar-value'),match:css('.match-result strong'),background:root.getPropertyValue('--bg').trim(),fontToken:root.getPropertyValue('--display').trim()};
+  function desktopView(){return window.innerWidth<800?'.mobile-brand strong':'.brand strong';}
+ });
+ expect(details.brand.font).toContain('system-ui');
+ expect(details.brand.size).toBe('24px');
+ expect(details.brand.weight).toBe('800');
+ expect(details.score.font).toContain('system-ui');
+ expect(details.score.size).toBe('41px');
+ expect(details.score.weight).toBe('900');
+ expect(details.ranking.size).toBe('17px');
+ expect(details.match.size).toBe('19px');
+ expect(details.background).toBe('#070a17');
+ expect(details.fontToken).not.toContain('--color-background');
+});
