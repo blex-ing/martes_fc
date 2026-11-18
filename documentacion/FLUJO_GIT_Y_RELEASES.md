@@ -1,26 +1,28 @@
 # Desarrollo, QA y publicación — MARTES FC
 
-Proceso adaptado del repositorio real blex-ing/mini_podcast.
+Proceso adaptado de mini-podcast, con dos ramas permanentes.
 
 ## Ramas
-- master: versión estable y rama principal.
-- develop: rama de integración protegida.
-- feature/*: sale de develop, PR obligatorio a develop.
-- release/vX.Y.Z: sale de develop, estabilización y notas, PR obligatorio a master.
-- main: rama histórica del bootstrap; no usar. Eliminar solo tras confirmar que no se necesita.
 
-## Flujo
-1. En feature/*: npm ci; npm run typecheck; npm run lint; npm test; npm run build; npm run test:visual.
-2. PR hacia develop: comprobar diff, CI verde y QA en móvil/escritorio; fusionar solo tras validación.
-3. Crear release/vX.Y.Z desde develop; congelar funciones y versionar notas de release.
-4. PR release/vX.Y.Z hacia master. GitHub Actions, después de fusionar, crea tag y Release si master coincide exactamente con el commit fusionado.
-5. Sincronizar master con develop mediante PR y eliminar ramas temporales solo tras comprobar SHA.
-6. Cloudflare se conectará después; previews por ramas, producción desde master.
+- `master`: versión estable conectada a Producción Cloudflare.
+- `develop`: integración y Preview Cloudflare.
+- `feature/*`: cambios aislados desde develop, PR de regreso a develop.
+- `release/vX.Y.Z`: estabilización desde develop, versión y notas, PR a master.
+- Las ramas históricas `main` y `sync/*` no forman parte del flujo actual; verificar referencias y eliminar restos manualmente o mediante una operación con lease.
 
-## Seguridad y protecciones
-- GitHub Free admite protección de ramas en repositorios públicos. Establecer reglas de master y develop en Settings → Branches.
-- Exigir PR y checks 'TypeScript, lint, domain tests and build' y 'Visual QA (Chromium)' cuando hayan completado con éxito.
-- No forzar push, ni borrar ramas permanentes, ni fusionar con CI roja.
-- CI con permiso contents: read; write solo donde necesitan tags y limpieza.
-- GitHub Actions oficiales fijadas por commit SHA y Dependabot semanal con revisión.
-- Mantener datos de personas, claves y capturas privadas fuera de Git y del bundle frontend.
+## Pasos de release
+
+1. Crear la feature desde develop y hacer cambios pequeños y reversibles.
+2. CI: `npm ci`, auditoría completa `npm audit --audit-level=high`, typecheck frontend/Worker, lint, pruebas de dominio/Worker/SQL y build.
+3. Playwright Chromium y WebKit en la matriz responsive, prestando especial atención a 320, 390, 768 y 1440 px; revisar Safari real antes de prometer equivalencia nativa.
+4. Merge por PR en develop, comprobar el preview y D1 correspondiente.
+5. Crear `release/vX.Y.Z`, actualizar `web/package.json`, lockfile y `documentacion/releases/vX.Y.Z.md`.
+6. PR a master, CI protegida. El workflow de release comprueba el SHA y publica el tag y GitHub Release.
+7. Confirmar deployment conectado en Cloudflare Workers, API pública D1 y Access administrativo.
+8. Sincronizar master hacia develop mediante PR y limpiar ramas temporales solo si el SHA coincide.
+
+## Seguridad
+
+- No forzar push, eludir checks ni copiar datos D1 entre entornos.
+- Acciones de GitHub fijadas a SHA, permisos mínimos, runtime secrets solo en Cloudflare.
+- Preservar etiquetas y releases publicados; no modificar una versión ya etiquetada.
