@@ -51,5 +51,16 @@ La skill swiftui-liquid-glass de OpenAI se refiere a APIs nativas de SwiftUI en 
 7. Ejecutar cd web && npm run check:design && npm run lint && npm run build && npm run test:visual.
 8. Revisar Safari iPhone real antes de aprobar una nueva intensidad de Glass: Chromium CI no sustituye Safari.
 
-## 6. Deuda controlada
+## 6. Regla de conservación de la identidad de master
+
+La versión `master` **v0.2.1** es la referencia visual aprobada por el propietario. El sistema de diseño documenta sus jerarquías; no debe reinterpretarlas sin una solicitud explícita.
+
+- Logo MARTES FC: tipografía de sistema, peso 800, 24 px; conservar la proporción, color, espaciado y tratamiento de acento.
+- Marcador principal: 41 px y peso 900; no reducir su importancia frente al escudo, rival o etiqueta del resultado.
+- Puntuaciones de listas: 19 px en resultados, 17 px en ranking; preservar el orden de lectura y las proporciones de las filas.
+- Mantener la paleta existente, densidad y contrastes de tarjetas. Las primitivas `ui-*` son **optativas** para componentes nuevos; no se inyectan masivamente en tarjetas, modal o navegación de `master`.
+- Antes de modificar una primitiva existente, contrastar capturas simultáneas con la misma fuente de datos, ancho de pantalla y estado de autenticación. Diferencias de texto o de acciones entre preview y producción pueden derivar de sus bases D1 o sesiones, no necesariamente del CSS.
+- Los tokens se pueden incorporar sin alterar los estilos computados. La QA visual comprobará tamaños y pesos de logo, marcador y estadísticas.
+
+## 7. Deuda controlada
 El stylesheet original aún contiene literales de color. Esta feature no los sustituye todos para evitar cambiar visualmente las pantallas ya publicadas. El nuevo presupuesto en CI impide aumentar la deuda y obliga a reutilizar tokens.
