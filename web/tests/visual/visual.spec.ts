@@ -11,7 +11,7 @@ test('navegación a jugadores y ficha individual',async ({page})=>{
  const mobile=page.viewportSize()!.width<800;
  if(mobile) await page.getByRole('navigation',{name:'Navegación móvil'}).getByRole('button',{name:'Jugadores'}).click();
  else await page.getByRole('navigation',{name:'Secciones'}).getByRole('button',{name:/Jugadores/}).click();
- await expect(page.getByRole('heading',{name:/Cada jugador/})).toBeVisible();
+ await expect(page.getByRole('heading',{name:/Los que hacen/})).toBeVisible();
  await page.getByRole('button',{name:/Ver estadísticas de Jugador 1/}).click();
  await expect(page.getByRole('dialog')).toBeVisible();
  await page.getByRole('button',{name:'Cerrar'}).click();
@@ -53,44 +53,68 @@ test('contrato visual de master: tipografía, marcador, identidad y tarjetas',as
  expect(details.fontToken).not.toContain('--color-background');
 });
 
-test('hybrid glass avanzado mantiene identidad y material común',async ({page})=>{
+test('Glass no modifica las capas y luces originales del hero y los KPI',async ({page})=>{
  await page.goto('/');
  await expect(page.locator('.sidebar.ui-hybrid-glass')).toHaveCount(1);
- await expect(page.locator('.hero.ui-hybrid-glass')).toHaveCount(1);
- await expect(page.locator('.metric.ui-hybrid-glass')).toHaveCount(4);
+ await expect(page.locator('.hero.ui-hybrid-glass')).toHaveCount(0);
+ await expect(page.locator('.hero-score.ui-hybrid-glass')).toHaveCount(0);
+ await expect(page.locator('.metric.ui-hybrid-glass')).toHaveCount(0);
+ await expect(page.locator('.metric.glass')).toHaveCount(4);
  await expect(page.locator('.panel.ui-hybrid-glass').first()).toBeVisible();
  await expect(page.locator('.primary-btn.ui-hybrid-control').first()).toBeVisible();
- const result=await page.evaluate(()=>{
-  const h=document.querySelector('.hero.ui-hybrid-glass');
-  if(!h)return null;
-  return {overlay:getComputedStyle(h,'::before').content,background:getComputedStyle(h).backgroundImage};
+ const surface=await page.evaluate(()=>{
+  const hero=document.querySelector('.hero');
+  const metric=document.querySelector('.metric');
+  if(!hero||!metric)throw new Error('Faltan las tarjetas originales');
+  const heroStyle=getComputedStyle(hero),lightA=getComputedStyle(hero,'::before'),lightB=getComputedStyle(hero,'::after');
+  const glow=getComputedStyle(metric,'::after');
+  return {
+   heroBackground:heroStyle.backgroundImage,
+   heroBeforeWidth:lightA.width,heroBeforeTop:lightA.top,heroBeforeRadius:lightA.borderRadius,
+   heroAfterWidth:lightB.width,heroAfterBottom:lightB.bottom,heroAfterRight:lightB.right,
+   metricGlowWidth:glow.width,metricGlowTop:glow.top,metricGlowFilter:glow.filter
+  };
  });
- expect(result).not.toBeNull();
- expect(result?.overlay).toBe('""');
- expect(result?.background).toContain('gradient');
+ expect(surface.heroBackground).toContain('radial-gradient');
+ expect(surface.heroBackground).toContain('linear-gradient');
+ expect(surface.heroBeforeWidth).toBe('300px');
+ expect(surface.heroBeforeTop).toBe('-90px');
+ expect(surface.heroBeforeRadius).toBe('50%');
+ expect(surface.heroAfterWidth).toBe('310px');
+ expect(surface.heroAfterBottom).toBe('-260px');
+ expect(surface.heroAfterRight).toBe('170px');
+ expect(surface.metricGlowWidth).toBe('70px');
+ expect(surface.metricGlowTop).toBe('-29px');
+ expect(surface.metricGlowFilter).toContain('blur(34px)');
 });
 
-test('portería ordena avatar, identidad y porcentaje sin solapamientos',async ({page},testInfo)=>{
+test('portería conserva jerarquía original y dos paneles, sin solapamientos',async ({page},testInfo)=>{
  await page.goto('/');
  const mobile=(page.viewportSize()?.width??0)<800;
  if(mobile)await page.getByRole('navigation',{name:'Navegación móvil'}).getByRole('button',{name:'Portería'}).click();
  else await page.getByRole('navigation',{name:'Secciones'}).getByRole('button',{name:/Portería/}).click();
- const hero=page.locator('.keeper-hero');
+ const hero=page.locator('.keeper-original-hero');
  await expect(hero).toBeVisible();
- await expect(hero.locator('.keeper-avatar')).toHaveCount(1);
- await expect(hero.locator('.keeper-information h2')).toHaveText('Portero demo');
- await expect(hero.locator('.donut')).toHaveCount(1);
- const bounds=await hero.evaluate(element=>{
-  function box(selector:string){const e=element.querySelector(selector);if(!e)throw Error('Elemento ausente '+selector);return e.getBoundingClientRect().toJSON();}
-  return {hero:element.getBoundingClientRect().toJSON(),avatar:box('.keeper-avatar'),identity:box('.keeper-identity'),text:box('.keeper-information'),donut:box('.donut')};
+ await expect(hero.locator('.keeper-emblem')).toHaveCount(1);
+ await expect(hero.getByText('El guardián del equipo')).toBeVisible();
+ await expect(hero.getByRole('heading',{name:'Portero demo'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Paradas por partido'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Efectividad',exact:true})).toBeVisible();
+ await expect(page.getByText('*Cómo se calcula:')).toBeVisible();
+ await expect(page.getByText('PARTIDOS CON EL PORTERO REGISTRADO')).toBeVisible();
+ await expect(page.getByText('Recibidos*')).toBeVisible();
+ await expect(page.locator('.keeper-original-metrics .metric')).toHaveCount(4);
+ await expect(page.getByText('Paradas / tiros a puerta*')).toBeVisible();
+ const bounds=await page.evaluate(()=>{
+  const hero=document.querySelector('.keeper-original-hero')!,emblem=hero.querySelector('.keeper-emblem')!,info=hero.querySelector('.keeper-original-identity')!;
+  const a=emblem.getBoundingClientRect(),b=info.getBoundingClientRect(),h=hero.getBoundingClientRect();
+  const panels=[...document.querySelectorAll('.keeper-original-panels .panel')].map(e=>e.getBoundingClientRect());
+  return {emblemRight:a.right,infoLeft:b.left,heroLeft:h.left,heroRight:h.right,panels:panels.map(x=>({left:x.left,right:x.right}))};
  });
- function intersects(a:{left:number;right:number;top:number;bottom:number},b:{left:number;right:number;top:number;bottom:number}){return a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1;}
- expect(intersects(bounds.avatar,bounds.text)).toBe(false);
- expect(intersects(bounds.identity,bounds.donut)).toBe(false);
- expect(bounds.avatar.left).toBeGreaterThanOrEqual(bounds.hero.left-1);
- expect(bounds.donut.right).toBeLessThanOrEqual(bounds.hero.right+1);
- expect(bounds.donut.bottom).toBeLessThanOrEqual(bounds.hero.bottom+1);
- await page.screenshot({path:testInfo.outputPath('goalkeeper.png'),fullPage:true});
+ expect(bounds.infoLeft).toBeGreaterThanOrEqual(bounds.emblemRight-2);
+ expect(bounds.emblemRight).toBeLessThanOrEqual(bounds.heroRight+1);
+ for(const p of bounds.panels){expect(p.left).toBeGreaterThanOrEqual(bounds.heroLeft-1);expect(p.right).toBeLessThanOrEqual(page.viewportSize()!.width+1);}
+ await page.screenshot({path:testInfo.outputPath('goalkeeper-restored.png'),fullPage:true});
 });
 test('D1 sin portero muestra estado vacío real, no portero demo',async ({page})=>{
  await page.route('**/api/public/snapshot',async route=>{
@@ -108,4 +132,26 @@ test('D1 sin portero muestra estado vacío real, no portero demo',async ({page})
  await expect(page.locator('.keeper-hero')).toHaveCount(0);
  await expect(page.getByText('Portero demo')).toHaveCount(0);
  await expect(page.getByText('La plantilla de Cloudflare D1 todavía no tiene un portero.')).toBeVisible();
+});
+
+test('demo original: detalle del partido conserva goleadores y participantes',async ({page})=>{
+ await page.goto('/');
+ const mobile=(page.viewportSize()?.width??0)<800;
+ if(mobile)await page.getByRole('navigation',{name:'Navegación móvil'}).getByRole('button',{name:'Partidos'}).click();
+ else await page.getByRole('navigation',{name:'Secciones'}).getByRole('button',{name:/Partidos/}).click();
+ await expect(page.getByRole('heading',{name:'Detalle del partido'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Participantes (6)'})).toBeVisible();
+ await expect(page.locator('.match-participants')).toContainText('Jugador');
+ await expect(page.locator('.highlight-number')).toBeVisible();
+});
+test('demo original: ficha de jugador conserva historial y tres estadísticas',async ({page})=>{
+ await page.goto('/');
+ const mobile=(page.viewportSize()?.width??0)<800;
+ if(mobile)await page.getByRole('navigation',{name:'Navegación móvil'}).getByRole('button',{name:'Jugadores'}).click();
+ else await page.getByRole('navigation',{name:'Secciones'}).getByRole('button',{name:/Jugadores/}).click();
+ await page.getByRole('button',{name:/Ver estadísticas de Jugador 1/}).click();
+ const dialog=page.getByRole('dialog');
+ await expect(dialog.getByRole('heading',{name:'Historial de partidos'})).toBeVisible();
+ await expect(dialog.locator('.profile-numbers > div')).toHaveCount(3);
+ await expect(dialog.getByText('Goles / partido')).toBeVisible();
 });

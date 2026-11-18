@@ -76,3 +76,15 @@ El propietario solicitó extender el efecto Glass híbrido a la mayor parte de l
 - En dispositivos táctiles la intensidad del reflejo se atenúa. Las preferencias de transparencia y movimiento reducidos siguen siendo prioritarias.
 - Las filas densas de datos, badges y textos permanecen sin superficies Glass adicionales: se preservan legibilidad y rendimiento.
 - La comprobación automática verifica presencia del material en tarjetas clave, estructura y tipografía aprobada. **La revisión visual de Safari iPhone sigue pendiente de una prueba en hardware real**.
+
+## 9. Exclusión Glass para superficies con luces decorativas propias
+
+**Regla obligatoria:** NO aplicar `ui-hybrid-glass` directamente a `.hero`, `.hero-score` ni `.metric`. Estas primitivas de la demo original ya tienen sus propias capas ópticas:
+
+- `.hero::before` y `.hero::after`: círculos decorativos y brillos de fondo que definen su identidad visual.
+- `.metric::after`: halo local de cada KPI, con gradiente definido por `--glow`.
+- `.hero-score`: sombra interior y fondo semitransparente originales.
+
+La clase general `ui-hybrid-glass` añade pseudoelementos y contexto de apilamiento, que pueden alterar su composición aun si `background` y las fuentes no cambian. Mantener `glass` normal y las clases originales en dichas superficies. Usar el efecto híbrido en otros paneles y navegación donde no compita con pseudoelementos con significado visual.
+
+La prueba visual comprueba explícitamente el fondo, los dos círculos del hero y el halo de KPI en escritorio y móvil. Cualquier evolución del material debe reemplazar esos efectos de forma explícita, con comparación visual aprobada, no por adición automática.
