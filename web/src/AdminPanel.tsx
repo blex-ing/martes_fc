@@ -33,7 +33,7 @@ export default function AdminPanel({online,authenticated,players,seasons,onRefre
  async function addSeason(e:FormEvent<HTMLFormElement>){
    e.preventDefault();if(await perform(()=>createSeason(label,start,end||null),'Temporada añadida'))setLabel('');
  }
- return <section className="panel glass data-tools admin-tools" aria-label="Administración del equipo">
+ return <section className="panel glass ui-hybrid-glass data-tools admin-tools" aria-label="Administración del equipo">
    <div className="panel-heading"><div><h2>Administración del equipo</h2><p>Resultados compartidos en Cloudflare D1 · cambios protegidos</p></div></div>
    {!authenticated?<div className="notice-block">
       {online?'Las estadísticas son públicas. Solo una persona autorizada puede modificarlas.':'Primero configura Cloudflare D1 y Access para habilitar la administración.'}
@@ -44,14 +44,14 @@ export default function AdminPanel({online,authenticated,players,seasons,onRefre
     <form className="form-grid" onSubmit={addPlayer}>
      <div className="field"><label htmlFor="admin-name">Nombre público</label><input id="admin-name" value={name} maxLength={40} required onChange={e=>setName(e.target.value)}/></div>
      <div className="field"><label htmlFor="admin-role">Posición</label><select id="admin-role" value={role} onChange={e=>setRole(e.target.value as 'Portero'|'Jugador')}><option>Jugador</option><option>Portero</option></select></div>
-     <button className="primary-btn" disabled={busy} type="submit">Añadir jugador</button>
+     <button className="primary-btn ui-hybrid-control" disabled={busy} type="submit">Añadir jugador</button>
     </form>
     <div className="admin-list">
      {players.map(p=><div className="admin-row" key={p.id}>
       {editingId===p.id?<form className="form-grid" onSubmit={savePlayer} aria-label={'Editar jugador '+p.name}>
        <div className="field"><label htmlFor={'edit-name-'+p.id}>Nombre público</label><input id={'edit-name-'+p.id} value={editName} maxLength={40} required disabled={busy} onChange={e=>setEditName(e.target.value)}/></div>
        <div className="field"><label htmlFor={'edit-role-'+p.id}>Posición</label><select id={'edit-role-'+p.id} value={editRole} disabled={busy} onChange={e=>setEditRole(e.target.value as 'Portero'|'Jugador')}><option>Jugador</option><option>Portero</option></select></div>
-       <button className="primary-btn" disabled={busy} type="submit">Guardar cambios</button>
+       <button className="primary-btn ui-hybrid-control" disabled={busy} type="submit">Guardar cambios</button>
        <button className="outline-btn" disabled={busy} type="button" onClick={()=>setEditingId(null)}>Cancelar</button>
       </form>:<><span>{p.name} · {p.role}{p.active===false?' · Inactivo':''}</span>
        <div className="admin-actions">
