@@ -33,6 +33,7 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run test:worker
+      - run: python3 scripts/check-concurrent-update.py
       - name: Validate SQL migrations and referential integrity
         run: |
           python3 - <<'PY'

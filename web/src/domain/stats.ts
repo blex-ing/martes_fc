@@ -41,6 +41,10 @@ export function validateMatch(value: unknown, knownIds: readonly string[], goalk
   if (!m.goalkeeperId && m.saves !== 0) return false;
   return m.status === 'finished';
 }
+/** Filtrado de vista sin alterar los partidos históricos almacenados. */
+export function seasonMatches(matches: readonly Match[],seasonId:string|null):Match[]{
+ return seasonId?matches.filter(m=>m.seasonId===seasonId):[...matches];
+}
 export function resultCode(m: Match): ResultCode {
   return m.goalsFor > m.goalsAgainst ? 'win' : m.goalsFor < m.goalsAgainst ? 'loss' : 'draw';
 }
@@ -54,15 +58,19 @@ export function playerMetrics(p: Player, matches: readonly Match[]): PlayerStats
     rate: saves + conceded ? Math.round(100 * saves / (saves + conceded)) : 0,
     clean:keep.filter(m => m.goalsAgainst === 0).length };
 }
-export function teamMetrics(matches: readonly Match[], players: readonly Player[]): TeamStats {
+export function teamMetrics(matches: readonly Match[], _players: readonly Player[]): TeamStats {
   const finished = matches.filter(m => m.status === 'finished');
   const gf = finished.reduce((n,m) => n+m.goalsFor,0);
   const ga = finished.reduce((n,m) => n+m.goalsAgainst,0);
-  const keeper = players.find(p => p.role === 'Portero');
-  return {played:finished.length,wins:finished.filter(m => resultCode(m) === 'win').length,
-    draws:finished.filter(m => resultCode(m) === 'draw').length,
-    losses:finished.filter(m => resultCode(m) === 'loss').length,gf,ga,diff:gf-ga,
-    keeper:keeper ? playerMetrics(keeper,finished) : emptyStats()};
+  const defended=finished.filter(m=>m.goalkeeperId!==null);
+  const saves=defended.reduce((n,m)=>n+m.saves,0);
+  const conceded=defended.reduce((n,m)=>n+m.goalsAgainst,0);
+  const keeper:PlayerStats={...emptyStats(),played:defended.length,keeperPlayed:defended.length,
+   saves,conceded,rate:saves+conceded?Math.round(100*saves/(saves+conceded)):0,
+   clean:defended.filter(m=>m.goalsAgainst===0).length};
+  return {played:finished.length,wins:finished.filter(m=>resultCode(m)==='win').length,
+    draws:finished.filter(m=>resultCode(m)==='draw').length,
+    losses:finished.filter(m=>resultCode(m)==='loss').length,gf,ga,diff:gf-ga,keeper};
 }
 export function leaderboard(players: readonly Player[],matches: readonly Match[]) {
   return players.map(p=>({p,...playerMetrics(p,matches)}))

@@ -116,6 +116,36 @@ test('JWT firmado RS256 permite únicamente administrador autorizado y bloquea C
       const body=await result.json();
       if(scenario==='has_appearances'||scenario==='was_goalkeeper')assert.equal(body.code,'player_has_history');
     }
+    // Conflicto de revisión: el lote debe contener una barrera SQL inmediata
+    // al UPDATE y rechazar la reescritura de participantes si cambió la revisión.
+    const record={id:'m1',date:'2026-11-10',opponent:'Rival',goalsFor:1,goalsAgainst:0,
+      saves:2,goalkeeperId:'p1',appearances:['p1'],goals:{p1:1},revision:1,status:'finished'};
+    for(const concurrent of [false,true]){
+      let called=0;
+      const db:Database={
+        prepare(sql:string):Statement{
+          const stmt:Statement={bind(){return stmt;},async all<T>(){
+            return {results:sql==='SELECT id,role FROM players'?[{id:'p1',role:'Portero'}] as T[]:[] as T[]};
+          },async first<T>(){
+            if(sql.includes('SELECT revision,season_id FROM matches'))return {revision:1,season_id:'season-2026'} as T;
+            if(sql.includes('SELECT id FROM seasons'))return {id:'season-2026'} as T;
+            if(sql==='SELECT revision FROM matches WHERE id=?')return {revision:concurrent?2:1} as T;
+            return null;
+          },async run(){return {meta:{changes:1}};}};
+          return stmt;
+        },
+        async batch(statements:Statement[]){called++;
+          assert.equal(statements.length,5);
+          if(concurrent)throw Error('CHECK constraint failed: audit_events.actor');
+          return [];
+        }
+      };
+      const req=new Request(BASE+'/api/admin/matches/m1',{method:'PUT',headers:authHeaders,body:JSON.stringify(record)});
+      const response=await handleApi(req,{...env,DB:db});
+      assert.equal(response.status,concurrent?409:200);
+      assert.equal(called,1);
+      if(concurrent)assert.equal((await response.json()).code,'stale_revision');
+    }
     const withoutOrigin=await handleApi(request('/api/admin/players/p1','DELETE',{'Cf-Access-Jwt-Assertion':token}),env);
     assert.equal(withoutOrigin.status,403);
   }finally{globalThis.fetch=old;}

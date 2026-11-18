@@ -42,4 +42,7 @@
  --glass-focus:var(--color-primary);
  --glass-surface:color-mix(in srgb,var(--color-surface-solid) 74%,transparent);
  --glass-glow:color-mix(in srgb,var(--color-secondary) 17%,transparent);
+ --match-vs-color:#60708e;
+ --match-colon-color:#687693;
+ --recent-form-label:#9aaac5;
 }
