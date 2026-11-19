@@ -19,7 +19,7 @@ SCHEMA = (ROOT / "migrations/0001_initial.sql").read_text(encoding="utf-8")
 
 
 def actual_sql(prefix: str) -> str:
-    match = re.search(r"db\\.prepare\\('(" + re.escape(prefix) + r"[^']+)'\\)", WORKER)
+    match = re.search(r"db\.prepare\('(" + re.escape(prefix) + r"[^']+)'\)", WORKER)
     assert match, f"Snapshot SQL query not found: {prefix}"
     return match.group(1)
 
@@ -74,7 +74,8 @@ def run_case(count: int) -> dict:
     expected = [row[0] for row in sorted(rows, key=lambda row: (row[2], row[0]), reverse=True)[:2000]]
     assert ids == expected, f"Wrong ordering or limit for {count} matches"
     assert len(appearances) == len(ids) * 7
-    assert all(row["match_id"] in set(ids) for row in appearances)
+    selected = set(ids)
+    assert all(row["match_id"] in selected for row in appearances)
     by_match = Counter(row["match_id"] for row in appearances)
     assert all(by_match[match_id] == 7 for match_id in ids)
     assert all(not match_id.startswith("hidden") for match_id in ids)
