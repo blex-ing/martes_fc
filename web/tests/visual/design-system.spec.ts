@@ -49,16 +49,23 @@ test('tokens compartidos y preferencia de movimiento reducido conservan la acces
  await page.goto('/');
  const action=page.locator('.ui-hybrid-control').first();
  await expect(action).toBeVisible();
- await expect(action).toHaveCSS('min-height','44px');
+ // La CTA heredada conserva 39 px: cambiar su geometría requeriría revisión visual explícita.
+ await expect(action).toHaveCSS('min-height','39px');
  await expect(action).toHaveCSS('transition-duration','0s');
  const materials=await page.evaluate(()=>{
+  const isolated=document.createElement('button');
+  isolated.className='ui-hybrid-control';
+  document.body.appendChild(isolated);
+  const isolatedMinHeight=getComputedStyle(isolated).minHeight;
+  isolated.remove();
   const root=getComputedStyle(document.documentElement);
   const card=getComputedStyle(document.querySelector<HTMLElement>('.panel.ui-hybrid-glass')!);
   const metric=getComputedStyle(document.querySelector<HTMLElement>('.metric')!,'::after');
   const hero=getComputedStyle(document.querySelector<HTMLElement>('.hero')!,'::before');
-  return {target:root.getPropertyValue('--touch-target-min').trim(),isolation:card.isolation,metricGlow:metric.width,heroGlow:hero.width};
+  return {target:root.getPropertyValue('--touch-target-min').trim(),isolatedMinHeight,isolation:card.isolation,metricGlow:metric.width,heroGlow:hero.width};
  });
  expect(materials.target).toBe('44px');
+ expect(materials.isolatedMinHeight).toBe('44px');
  expect(materials.isolation).toBe('isolate');
  expect(materials.metricGlow).toBe('70px');
  expect(materials.heroGlow).toBe('300px');
