@@ -1,52 +1,59 @@
 # MARTES FC · Estadísticas deportivas
 
-Dashboard público de un equipo amateur, con diseño Liquid Glass neón y datos ficticios. El código es público; la administración remota y los datos privados aún no existen.
+Aplicación de estadísticas de fútbol amateur con **React 19, TypeScript estricto, esbuild, Cloudflare Workers y D1**. La API pública sirve resultados compartidos y la administración se protege mediante Cloudflare Access y comprobaciones del Worker.
 
-**Stack:** React 19, TypeScript estricto y Vite. **v0.2.0 en desarrollo:** Cloudflare D1 y Worker API permitirán estadísticas compartidas; mientras D1 o Access no estén configurados, la versión estable mantiene la demo local.
+La demostración utiliza exclusivamente datos ficticios locales cuando no existe API. Si falla la base D1, el sistema muestra un error en lugar de sustituir datos reales por datos ficticios.
 
-## Desarrollar
+## Desarrollo
 
-Necesitas Node.js 24 y npm.
+Requiere Node.js 24 y npm. Desde la raíz del repositorio:
 
-    cd web
-    npm ci --no-audit --no-fund
-    npm run check:public
-    npm run typecheck
-    npm run typecheck:worker
-    npm run lint
-    npm test
-    npm run test:worker
-    npm run build
-    npm run dev
+```sh
+cd web
+npm ci --no-audit --no-fund
+npm run check:public
+npm run check:design
+npm run check:d1
+npm run check:no-picomatch
+npm run typecheck
+npm run typecheck:worker
+npm run lint
+npm test
+npm run test:worker
+npm run build
+npm run dev
+```
 
-La web local aparece en http://127.0.0.1:4173. Las pruebas visuales se ejecutan con Playwright: npx playwright install chromium y npm run test:visual.
+Servidor local: http://127.0.0.1:4173. QA visual: `npx playwright install --with-deps chromium webkit` y `npm run test:visual` (la selección de proyectos se define en `web/playwright.config.ts`).
 
 ## Arquitectura
 
-- web/src/App.tsx — interfaz React, navegación, formularios y vistas.
-- web/src/domain/stats.ts — tipos, reglas y cálculos.
-- web/src/data/demo.ts — datos 100% inventados.
-- web/src/data/storage.ts — persistencia local validada y exportación JSON.
-- web/src/data/api.ts — lectura D1 y operaciones de administrador.
-- web/src/AdminPanel.tsx — plantilla y temporadas, protegidas por el servidor.
-- worker/index.ts — API D1 y autenticación Cloudflare Access.
-- migrations/ — cambios SQL versionados; no guardar datos reales.
-- web/tests — dominio Node y pruebas Playwright.
-- web/styles.css — diseño responsive Liquid Glass.
-- .github/workflows — CI, releases y limpieza segura.
-- documentacion — arquitectura, gobierno, privacidad y guía Cloudflare.
+- `web/src/App.tsx`: composición, navegación, sesión y estado.
+- `web/src/views/`: vistas de resumen, partidos, plantilla, portería y ajustes.
+- `web/src/components/`: formularios y componentes reutilizables.
+- `web/src/domain/stats.ts`: validaciones y estadísticas.
+- `web/src/data/`: API, datos demo y persistencia local.
+- `worker/index.ts`: API de Workers, Access, autorización y operaciones D1.
+- `migrations/`: esquema y migraciones SQL.
+- `web/src/styles/tokens.css`, `primitives.css` y `web/styles.css`: contrato visual Liquid Glass.
+- `web/tests/`, `worker/tests/`: pruebas automatizadas.
+- `.github/workflows/`: checks, releases y limpieza segura.
 
-## Gobierno del repositorio
+## Ramas y despliegue
 
-GitHub es la fuente de verdad. Solo master (estable) y develop (integración) son permanentes:
-feature/* → PR develop → release/vX.Y.Z → PR master → tag y GitHub Release → sincronizar master a develop.
+Ramas permanentes: **`master` (producción)** y **`develop` (integración/preview)**.
 
-El código es público; no se versionan teléfonos, capturas de chats privados, fotos no autorizadas, claves ni otros datos personales.
+`feature/*` o `fix/*` → PR a `develop` → `release/vX.Y.Z` → PR a `master` → tag y GitHub Release → sincronización a `develop`.
 
-## Despliegue
+El Worker de producción se configura desde `wrangler.jsonc`, con D1 de producción y preview **separadas**. El comando de build de Cloudflare ejecuta `cd web && npm ci --no-audit --no-fund && npm run build`.
 
-La demo v0.1.1 está conectada a Cloudflare Workers Builds. La API v0.2.0 se desarrolla en feature; **requiere crear D1 producción/preview, configurar bindings y Cloudflare Access antes de la release**. No configurar recursos inventados ni publicar la feature sin pruebas de los servicios reales.
+No se guardan secretos, JWT, datos privados de jugadores ni respaldos D1 en Git. Los despliegues de preview no deben modificar producción. Un build correcto no sustituye una prueba real de la API y la autorización.
 
-**Requisitos vivos de todas las features:** [documentacion/REQUISITOS_VIVOS.md](documentacion/REQUISITOS_VIVOS.md), y [propuesta v0.2.0](documentacion/PROPUESTA_V0.2.0.md).
+## Documentación
 
-Lee [Requisitos](REQUISITOS.md), [Arquitectura](documentacion/ARQUITECTURA_Y_MANTENIMIENTO.md), [Flujo Git](documentacion/FLUJO_GIT_Y_RELEASES.md), [Privacidad](documentacion/PRIVACIDAD_Y_DATOS.md) y [Cloudflare](documentacion/DESPLIEGUE_CLOUDFLARE.md).
+- [Arquitectura y mantenimiento](documentacion/ARQUITECTURA_Y_MANTENIMIENTO.md)
+- [Flujo Git y releases](documentacion/FLUJO_GIT_Y_RELEASES.md)
+- [Operación D1 y Access](documentacion/OPERACION_D1_ACCESS.md)
+- [Despliegue Cloudflare](documentacion/DESPLIEGUE_CLOUDFLARE.md)
+- [Requisitos vivos](documentacion/REQUISITOS_VIVOS.md)
+- [Releases publicadas](https://github.com/blex-ing/martes_fc/releases)
