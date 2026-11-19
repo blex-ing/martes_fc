@@ -7,7 +7,7 @@ const snapshot={
  players:[{id:'player-1',name:'Jugador de prueba',role:'Jugador',initials:'JP',a:'#147aa3',b:'#6540a7',active:true}],
  matches:Array.from({length:20},(_,i)=>({
   id:`match-${String(i+1).padStart(2,'0')}`,date:'2026-11-19',opponent:`Rival ${i+1}`,
-  goalsFor:2,goalsAgainst:1,appearances:['player-1'],goals:{'player-1':1},
+  goalsFor:1,goalsAgainst:1,appearances:['player-1'],goals:{'player-1':1},
   goalkeeperId:null,saves:0,status:'finished',seasonId:'season-2026',revision:1
  }))
 };
