@@ -53,6 +53,7 @@ No se guardan secretos, JWT, datos privados de jugadores ni respaldos D1 en Git.
 
 - [Arquitectura y mantenimiento](documentacion/ARQUITECTURA_Y_MANTENIMIENTO.md)
 - [Flujo Git y releases](documentacion/FLUJO_GIT_Y_RELEASES.md)
+- [Auditoría de ramas históricas](documentacion/AUDITORIA_RAMAS_HISTORICAS.md)
 - [Operación D1 y Access](documentacion/OPERACION_D1_ACCESS.md)
 - [Despliegue Cloudflare](documentacion/DESPLIEGUE_CLOUDFLARE.md)
 - [Requisitos vivos](documentacion/REQUISITOS_VIVOS.md)

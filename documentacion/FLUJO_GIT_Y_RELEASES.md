@@ -24,6 +24,8 @@
 
 Las ramas históricas, incluidas `sync/*` y antiguas features, requieren auditoría individual de commits y autorización para su limpieza; **no** usar un job puntual que borre varias ramas sin verificar su contenido vigente.
 
+La auditoría fechada del historial y las decisiones por SHA se mantienen en [`AUDITORIA_RAMAS_HISTORICAS.md`](AUDITORIA_RAMAS_HISTORICAS.md). La issue #38 autorizó únicamente la retirada de `sync/v0.1.1`, commit completamente contenido en `master`, mediante Git y `--force-with-lease` verificados. **Nunca** usar una lista de ramas para eliminarlas retroactivamente; cualquier job puntual debe retirarse tras ejecutarse y validarse.
+
 ## Seguridad
 
 - No saltarse checks ni forzar merges; conservar los tags y releases publicados.
