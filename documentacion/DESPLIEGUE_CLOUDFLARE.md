@@ -1,5 +1,10 @@
 # Cloudflare Workers Builds — MARTES FC
 
+> **Estado vigente (noviembre de 2026):** producción desde `master`, previews desde `develop` y ramas, frontend React + TypeScript compilado con **esbuild**, Worker API y bases D1 separadas. Las releases se publican con PR `release/vX.Y.Z` y el workflow automático de GitHub. Los registros de fallos y comandos de Vite que siguen abajo son **históricos (17-11-2026)**; no son instrucciones vigentes de despliegue.
+
+**Build actual:** `cd web && npm ci --no-audit --no-fund && npm run build`, desde la raíz del repositorio (donde reside `wrangler.jsonc`). **Deploy:** `npx wrangler deploy` (producción). **Preview:** `npx wrangler preview` cuando está configurado. Verificar la configuración efectiva y el SHA en Cloudflare Workers Builds, sin asumir que CI de GitHub equivale a desplegar.
+
+---
 **Estado a 17-11-2026:** El usuario configuró el comando de build de Workers Builds; el despliegue correcto debe verificarse mediante los logs y la URL real. El código de la aplicación es público.
 
 - GitHub: blex-ing/martes_fc.

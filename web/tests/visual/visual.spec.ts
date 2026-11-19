@@ -194,3 +194,45 @@ test('modal de partidos: botones accesibles con listas extensas y scroll indepen
  await page.keyboard.press('Escape');
  await expect(dialog).toHaveCount(0);
 });
+
+
+test('navegación móvil recibe clics reales dentro del viewport visual',async ({page})=>{
+ await page.goto('/');
+ if(page.viewportSize()!.width>390)return;
+ const labels=['Partidos','Jugadores','Portería','Inicio'];
+ for(const label of labels){
+  const button=page.getByRole('navigation',{name:'Navegación móvil'}).getByRole('button',{name:label});
+  const hit=await button.evaluate(node=>{
+   const rect=node.getBoundingClientRect();
+   const visual=window.visualViewport;
+   const x=rect.x+rect.width/2,y=rect.y+rect.height/2;
+   const target=document.elementFromPoint(x,y);
+   const width=document.documentElement.scrollWidth;
+   return {clickable:!!target&&node.contains(target),x,y,viewportWidth:window.innerWidth,visualHeight:visual?.height??window.innerHeight,visualTop:visual?.offsetTop??0,scrollWidth:width,screenWidth:document.documentElement.clientWidth};
+  });
+  expect(hit.viewportWidth,JSON.stringify({label,hit})).toBeLessThanOrEqual(page.viewportSize()!.width+2);
+  expect(hit.scrollWidth,JSON.stringify({label,hit})).toBeLessThanOrEqual(hit.screenWidth+2);
+  expect(hit.y,JSON.stringify({label,hit})).toBeLessThanOrEqual(hit.visualHeight+hit.visualTop+1);
+  expect(hit.clickable,JSON.stringify({label,hit})).toBe(true);
+  await button.click();
+  await expect(button).toHaveAttribute('aria-current','page');
+ }
+});
+
+test('vistas principales sin desbordamiento horizontal en la matriz responsive',async ({page})=>{
+ await page.goto('/');
+ for(const label of ['Partidos','Jugadores','Portería']){
+  const v=await page.evaluate(()=>({scrollWidth:document.documentElement.scrollWidth,clientWidth:document.documentElement.clientWidth,innerWidth:window.innerWidth}));
+  expect(v.scrollWidth,JSON.stringify({label,v})).toBeLessThanOrEqual(v.clientWidth+2);
+  const mobile=(page.viewportSize()?.width??0)<800;
+  const nav=page.getByRole('navigation',{name:mobile?'Navegación móvil':'Secciones'});
+  await nav.getByRole('button',{name:new RegExp(label)}).click();
+ }
+});
+
+test('fallo de D1 no muestra resultados demo como datos reales',async ({page})=>{
+ await page.route('**/api/public/snapshot',async route=>route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({code:'database_unavailable'})}));
+ await page.goto('/');
+ await expect(page.getByText('Servicio temporalmente no disponible.')).toBeVisible();
+ await expect(page.getByText('Resultados ficticios. Tu navegador guarda los cambios de prueba.')).toHaveCount(0);
+});
