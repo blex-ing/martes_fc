@@ -1,10 +1,11 @@
 import type {ViewContext} from './types';
 import {Icon,datePart,Intro,Disclaimer,Metric,Donut} from '../components/display';
-import {playerMetrics} from '../domain/stats';
+import {useMemo} from 'react';
 export default function GoalkeeperView(context:ViewContext){
- const {live,online,unavailable,goalkeeper,goalkeepers,sorted,visibleMatches,summary,activeSeason,setSelectedKeeperId,admin,changeView}=context;
+ const {live,online,unavailable,goalkeeper,goalkeepers,sorted,ranking,summary,activeSeason,setSelectedKeeperId,admin,changeView}=context;
+ const keeperMatches=useMemo(()=>sorted.filter(m=>m.goalkeeperId===goalkeeper?.id),[sorted,goalkeeper?.id]);
  return <><Intro eyebrow="ESTADÍSTICAS DE PORTERÍA" title="Bajo los tres palos." accent="Protegiendo cada gol." description="Seguimiento específico de las intervenciones del portero."/><Disclaimer live={live} online={online} unavailable={unavailable}/>{goalkeepers.length>1&&<div className="keeper-select field"><label htmlFor="keeper-picker">Seleccionar portero</label><select id="keeper-picker" value={goalkeeper?.id??''} onChange={e=>setSelectedKeeperId(e.target.value)}>{goalkeepers.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></div>}{goalkeeper?(()=>{
- const x=playerMetrics(goalkeeper,visibleMatches),km=sorted.filter(m=>m.goalkeeperId===goalkeeper.id),max=Math.max(1,...km.map(m=>m.saves));
+ const x=ranking.find(entry=>entry.p.id===goalkeeper.id)!,km=keeperMatches,max=Math.max(1,...km.map(m=>m.saves));
  return <><section className="keeper-hero keeper-original-hero ui-hybrid-glass" aria-label="Identidad del portero"><div className="keeper-emblem"><Icon name="shield"/></div><div className="keeper-original-identity"><div className="kicker keeper-original-kicker">PORTERO PRINCIPAL</div><h2>{goalkeeper.name}</h2><p>MARTES FC · Temporada {activeSeason?.label??(live?'sin activa':'2026')}</p><span className="keeper-badge"><Icon name="shield"/> El guardián del equipo</span></div></section>
  <section className="metrics-grid keeper-original-metrics" aria-label="Estadísticas de portería"><Metric label="Paradas" value={x.saves} hint="Total acumulado" icon="shield" tone="cyan"/><Metric label="Goles encajados" value={x.conceded} hint="Jugando como portero" icon="target" tone="pink"/><Metric label="Efectividad" value={x.rate+'%'} hint="Paradas / tiros a puerta*" icon="trend" tone="purple"/><Metric label="Partidos en portería" value={x.keeperPlayed} hint={x.clean+' porterías a cero'} icon="calendar" tone="green"/></section>
  <div className="dashboard-grid keeper-original-panels">
