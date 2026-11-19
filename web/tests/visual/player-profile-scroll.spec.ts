@@ -23,11 +23,18 @@ test('el historial completo tiene scroll independiente y el cierre permanece vis
  await nav.getByRole('button',{name:/Jugadores/}).click();
  await page.getByRole('button',{name:'Ver estadísticas de Jugador de prueba'}).click();
  const dialog=page.getByRole('dialog',{name:'Ficha del jugador'});
- const scroll=dialog.getByRole('region',{name:'Estadísticas e historial del jugador'});
+ const scroll=dialog.getByRole('region',{name:'Historial de partidos'});
+ const identity=dialog.locator('.profile-top');
+ const metrics=dialog.locator('.profile-numbers');
+ const title=dialog.locator('.profile-history-title');
  const close=dialog.getByRole('button',{name:'Cerrar'});
  const rows=scroll.locator('.match-row');
  await expect(rows).toHaveCount(20);
  await expect(close).toBeInViewport();
+ await expect(identity).toBeInViewport();
+ await expect(metrics).toBeInViewport();
+ await expect(title).toBeInViewport();
+ const fixedBefore=await Promise.all([identity,metrics,title].map(x=>x.boundingBox()));
  await expect(scroll).toHaveAttribute('tabindex','0');
  const before=await scroll.evaluate(node=>({
   overflow:getComputedStyle(node).overflowY,
@@ -40,6 +47,13 @@ test('el historial completo tiene scroll independiente y el cierre permanece vis
  await expect(rows.last()).toBeInViewport();
  await expect(rows.last()).toContainText('Rival 1');
  await expect(close).toBeInViewport();
+ await expect(identity).toBeInViewport();
+ await expect(metrics).toBeInViewport();
+ await expect(title).toBeInViewport();
+ const fixedAfter=await Promise.all([identity,metrics,title].map(x=>x.boundingBox()));
+ for(let i=0;i<fixedBefore.length;i++){
+  expect(fixedAfter[i]?.y).toBeCloseTo(fixedBefore[i]!.y,0);
+ }
  const after=await scroll.evaluate(node=>({
   top:node.scrollTop,pageScroll:document.scrollingElement?.scrollTop??0,
   horizontal:document.documentElement.scrollWidth-document.documentElement.clientWidth
