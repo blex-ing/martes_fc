@@ -1,5 +1,7 @@
 # Operación Cloudflare D1 + Access — MARTES FC
 
+> **Nota de vigencia (19-11-2026):** este documento conserva el historial de puesta en marcha y los comandos usados para v0.2.0 el **17-11-2026**. Sus frases «pendiente», «no publicar aún en master» y «v0.1.1 en producción» pertenecen exclusivamente a aquel momento; **no son el estado actual**. A fecha de esta auditoría, la release v0.3.7 está publicada en `master` y el build de Cloudflare ha pasado. La [issue #10](https://github.com/blex-ing/martes_fc/issues/10) documenta la migración SQL de D1 de producción y la sesión Access de Preview confirmadas posteriormente. La CI por sí sola **no acredita** una sesión administrativa funcional en producción ni lectura actual del panel Cloudflare; comprobar esos puntos en el entorno real antes de cualquier intervención. Los pasos de migración no se vuelven a ejecutar sin consulta previa y respaldo.
+
 ## Estado de los recursos (17-11-2026)
 **Confirmados por captura del dashboard del propietario, no por conexión API:**
 - D1 producción `martes-fc-prod`: `cd88771a-bfce-4b6b-873f-61066407a7db`
@@ -91,7 +93,7 @@ Proteger **solo** el espacio `/api/admin/*`, manteniendo `/api/public/*` y está
 ## Backup y rollback
 Antes de migrar, exportar D1 o usar Time Travel/backup según el plan vigente y verificar capacidad de restauración; conservar la copia fuera del repo público. Un despliegue de frontend/Worker se revierte en Cloudflare; una migración destructiva **no** se revierte con un rollback de código. Realizar cambios SQL aditivos y ensayar restore en staging.
 
-## Política de publicaciones
+## Política histórica de publicaciones de v0.2.0 (17-11-2026)
 No fusionar a `master` ni etiquetar v0.2.0 hasta que D1 y Access reales estén configurados, pruebas remotas pasen y las URLs sean confirmadas. La demo v0.1.1 sigue accesible mientras se trabaja en develop.
 
 ## Comprobación API Preview desde Codespaces (17-11-2026, 16:30 UTC)
