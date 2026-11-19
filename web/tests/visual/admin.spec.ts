@@ -85,12 +85,12 @@ test('la edición obsoleta muestra conflicto y conserva el formulario abierto',a
 test('el servidor impide cambiar a Jugador al portero con partidos históricos',async({page})=>{
  await remoteAdmin(page);
  await page.route('**/api/admin/players/p1',async route=>route.fulfill({status:409,contentType:'application/json',body:JSON.stringify({code:'goalkeeper_has_history'})}));
- const row=page.locator('.admin-row').filter({hasText:'Portero prueba'});
- await row.getByRole('button',{name:'Editar'}).click();
- await row.getByRole('combobox',{name:'Posición'}).selectOption('Jugador');
- await row.getByRole('button',{name:'Guardar cambios'}).click();
+ await page.locator('.admin-row').filter({hasText:'Portero prueba'}).getByRole('button',{name:'Editar'}).click();
+ const form=page.getByRole('form',{name:'Editar jugador Portero prueba'});
+ await form.getByRole('combobox',{name:'Posición'}).selectOption('Jugador');
+ await form.getByRole('button',{name:'Guardar cambios'}).click();
  await expect(page.getByRole('alert')).toContainText('figura como portero');
- await expect(row.getByRole('combobox',{name:'Posición'})).toHaveValue('Jugador');
+ await expect(form.getByRole('combobox',{name:'Posición'})).toHaveValue('Jugador');
 });
 
 test('al cerrar el modal con Escape se devuelve el foco al botón de apertura',async({page})=>{
