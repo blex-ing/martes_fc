@@ -1,7 +1,8 @@
-import {playerMetrics,resultCode,type Match,type Player} from '../domain/stats';
+import {useMemo} from 'react';
+import {resultCode,type Match,type Player,type PlayerStats} from '../domain/stats';
 import {Avatar,formatDate,resultLabels} from './display';
-export default function PlayerProfile({athlete,matches,sorted}:{athlete:Player;matches:readonly Match[];sorted:readonly Match[]}){
- const metrics=playerMetrics(athlete,matches);
- const history=sorted.filter(m=>m.appearances.includes(athlete.id));
+export default function PlayerProfile({athlete,metrics,sorted}:{athlete:Player;metrics:PlayerStats;sorted:readonly Match[]}){
+ // La lista solo se recalcula al cambiar el jugador o la temporada, no en cada render del modal.
+ const history=useMemo(()=>sorted.filter(m=>m.appearances.includes(athlete.id)),[sorted,athlete.id]);
  return <><div className="profile-top"><Avatar p={athlete} className="profile-icon"/><div><h2>{athlete.name}</h2><p>{athlete.role==='Portero'?'Especialidad: guardameta':'Jugador del equipo'}</p><span className="role-chip">{athlete.role} · MARTES FC</span></div></div><div className="profile-numbers"><div><strong>{metrics.played}</strong><span>Partidos</span></div><div><strong>{metrics.goals}</strong><span>Goles</span></div><div><strong>{athlete.role==='Portero'?metrics.saves:metrics.played?(metrics.goals/metrics.played).toFixed(2):'0.00'}</strong><span>{athlete.role==='Portero'?'Paradas':'Goles / partido'}</span></div></div>{athlete.role==='Portero'&&<div className="notice-block keeper-methodology">Efectividad como portero: <strong>{metrics.rate}%</strong> · Goles encajados: <strong>{metrics.conceded}</strong> · Porterías a cero: <strong>{metrics.clean}</strong>.</div>}<h3 className="profile-history-title">Historial de partidos</h3><div className="match-preview-list">{history.map(m=><div className="match-row" key={m.id}><div className="match-info"><strong>{m.opponent}</strong><small>{formatDate(m.date)}</small></div><div className="match-result"><strong>{athlete.role==='Portero'&&m.goalkeeperId===athlete.id?m.saves+' paradas':(m.goals[athlete.id]??0)+' goles'}</strong><span className={'result-label '+resultCode(m)}>{resultLabels[resultCode(m)]}</span></div></div>)}{!history.length&&<div className="empty-state">Sin partidos disputados</div>}</div></>;
 }
