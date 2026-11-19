@@ -76,7 +76,7 @@
 .profile-modal .modal-head{flex:0 0 auto}
 .profile-modal .profile-content{display:flex;flex:0 1 auto;flex-direction:column;min-height:0;min-width:0}
 .profile-modal .profile-content > :not(.profile-history-scroll){flex:0 0 auto}
-.profile-modal .profile-history-scroll{flex:0 1 auto;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;align-content:start;-webkit-overflow-scrolling:touch}
+.profile-modal .profile-history-scroll{flex:0 1 auto;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;grid-auto-rows:max-content;align-content:start;-webkit-overflow-scrolling:touch}
 @media(max-width:700px){.modal.profile-modal{max-height:calc(100dvh - 16px);padding-bottom:max(19px,env(safe-area-inset-bottom))}}
 
 /* Compactos: evitar que las acciones de cabecera ensanchen el viewport visual.
