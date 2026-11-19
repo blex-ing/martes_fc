@@ -45,9 +45,19 @@ export function describeApiError(error:unknown):string{
   goalkeeper_has_history:'El jugador figura como portero en partidos anteriores; no se puede cambiar su posición.',
   database_unavailable:'Cloudflare D1 no está disponible. No se han guardado cambios.',
   operation_failed:'El servidor no pudo completar la operación. Inténtalo de nuevo.',
-  network:'No hay conexión con el servidor. Comprueba la red y vuelve a intentarlo.'
+  network:'No hay conexión con el servidor. Comprueba la red y vuelve a intentarlo.',
+  invalid_response:'El servidor devolvió una respuesta inesperada. Recarga la página y comprueba tu sesión.',
+  invalid_json:'El servidor no pudo interpretar la solicitud. Revisa los datos y vuelve a intentarlo.',
+  invalid_season:'Revisa el nombre y las fechas: la fecha de fin no puede preceder al inicio.',
+  invalid_active:'El estado del jugador no es válido. Recarga los datos y vuelve a intentarlo.',
+  player_not_found:'Ese jugador ya no existe. Actualiza la plantilla antes de continuar.',
+  match_not_found:'Ese partido ya no existe. Recarga los resultados antes de continuar.',
+  season_not_found:'Esa temporada ya no existe. Actualiza los datos antes de continuar.',
+  database_not_configured:'La base de datos compartida todavía no está configurada.',
+  method_not_allowed:'Operación no permitida. Recarga la página antes de intentarlo.',
+  not_found:'No se encontró el recurso solicitado. Actualiza los datos.'
  };
- return messages[code]??'No se pudo completar la operación. Código: '+code;
+ return messages[code]??'No se pudo completar la operación. Inténtalo de nuevo o actualiza los datos.';
 }
 export async function adminSession():Promise<boolean>{
   try {
@@ -61,12 +71,21 @@ async function mutation(path:string,method:'POST'|'PUT'|'PATCH'|'DELETE',payload
  let res:Response;
  try{res=await fetch(path,{method,credentials:'same-origin',headers:{Accept:'application/json',...(payload===undefined?{}:{'Content-Type':'application/json'})},body:payload===undefined?undefined:JSON.stringify(payload)});}
  catch{throw new ApiError('network',0);}
- const data:unknown=await res.json().catch(()=>({}));
+ // Nunca interpretar HTML de Cloudflare Access o JSON inválido como una escritura correcta.
+ if(!res.headers.get('Content-Type')?.includes('application/json')){
+  throw new ApiError(res.status===401?'unauthorized':'invalid_response',res.status);
+ }
+ let data:unknown;
+ try{data=await res.json();}catch{throw new ApiError('invalid_response',res.status);}
+ if(!data||typeof data!=='object'||Array.isArray(data))throw new ApiError('invalid_response',res.status);
+ const response=data as Record<string,unknown>;
  if(!res.ok){
-  const code=data&&typeof data==='object'&&'code' in data?String(data.code):'error_'+res.status;
+  const code=typeof response.code==='string'&&/^[a-z_]{1,60}$/.test(response.code)
+   ?response.code:res.status===401?'unauthorized':res.status===403?'invalid_origin':'operation_failed';
   throw new ApiError(code,res.status);
  }
- return data as Record<string,unknown>;
+ if(response.ok!==true)throw new ApiError('invalid_response',res.status);
+ return response;
 }
 export async function createMatch(record:Match):Promise<void>{
   await mutation('/api/admin/matches','POST',record);
