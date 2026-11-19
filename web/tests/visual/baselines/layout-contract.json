@@ -1,0 +1,11 @@
+{
+  "_note": "Contrato visual extraído de CSS v0.3.8. Es una referencia de propiedades, NO una imagen aprobada píxel a píxel.",
+  "background": "#070a17",
+  "heroRadius": "19px",
+  "heroBeforeWidth": "300px",
+  "heroAfterWidth": "310px",
+  "scoreRadius": "16px",
+  "metricRadius": "16px",
+  "metricGlowWidth": "70px",
+  "panelRadius": "18px"
+}

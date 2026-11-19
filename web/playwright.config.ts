@@ -12,7 +12,8 @@ export default defineConfig({
     {name:'tablet-chromium',use:{...devices['Desktop Chrome'],viewport:{width:768,height:1024},isMobile:true,hasTouch:true}},
     {name:'compact-chromium',use:{...devices['iPhone 13'],defaultBrowserType:'chromium',viewport:{width:320,height:720}}},
     {name:'mobile-chromium',use:{...devices['iPhone 13'],defaultBrowserType:'chromium'}},
-    {name:'mobile-webkit',use:{...devices['iPhone 13']}}
+    {name:'mobile-webkit',use:{...devices['iPhone 13']}},
+    {name:'compact-webkit',use:{...devices['iPhone 13'],viewport:{width:320,height:720}}}
   ],
   webServer:{command:'npm run dev',url:'http://127.0.0.1:4173',reuseExistingServer:!process.env.CI,timeout:60_000}
 });
