@@ -81,3 +81,18 @@
 /* Confirmación de borrado accesible, restringida al panel administrativo. */
 .admin-tools .admin-delete-confirm{display:flex;flex-wrap:wrap;align-items:center;gap:8px;flex-basis:100%;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--glass-surface)}
 .admin-tools .admin-delete-confirm p{flex-basis:100%;margin:0;font-size:12px;overflow-wrap:anywhere}
+
+/* #37: zonas táctiles >=44 px en dispositivos de puntero grueso.
+   Solo amplía los controles, sin modificar fondos, colores ni brillos Liquid Glass. */
+@media(max-width:950px) and (pointer:coarse){
+ .primary-btn,.secondary-btn,.outline-btn,.tab-btn,.icon-btn,
+ .match-row-btn,.mobile-nav-item,.text-link,.player-card-foot button{
+  min-height:var(--touch-target-min);
+ }
+ .match-row-btn,.icon-btn{min-width:var(--touch-target-min);display:inline-grid;place-items:center}
+ .avatar-btn{width:var(--touch-target-min);height:var(--touch-target-min)}
+}
+/* Los nombres de D1 pueden tener la longitud máxima permitida: no deben abrir la vista. */
+@media(max-width:950px){
+ .hero-club,.bar-identity span,.match-detail-caption{min-width:0;overflow-wrap:anywhere}
+}
