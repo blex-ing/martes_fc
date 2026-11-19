@@ -72,6 +72,21 @@ for(const role of ['Jugador','Portero'] as const){
    if(role==='Portero')await expect(dialog.locator('.keeper-methodology')).toBeInViewport();
 
    const before=await readGeometry(dialog,role);
+   // Hallazgo visual: el grid comprimía las filas aunque el scrollTop funcionara.
+   // Cada tarjeta debe contener sus textos y mantener separación respecto de la siguiente.
+   const cards=await history.evaluate(root=>[...root.querySelectorAll<HTMLElement>('.match-row')].map(row=>{
+    const box=row.getBoundingClientRect(),css=getComputedStyle(row);
+    const info=row.querySelector<HTMLElement>('.match-info')!;
+    const result=row.querySelector<HTMLElement>('.match-result')!;
+    const required=Math.max(info.getBoundingClientRect().height,result.getBoundingClientRect().height)
+     +parseFloat(css.paddingTop)+parseFloat(css.paddingBottom)
+     +parseFloat(css.borderTopWidth)+parseFloat(css.borderBottomWidth);
+    return {top:box.top,bottom:box.bottom,height:box.height,required};
+   }));
+   for(let i=0;i<cards.length;i++){
+    expect(cards[i]!.height,`Fila ${i+1} recortada`).toBeGreaterThanOrEqual(cards[i]!.required-1);
+    if(i>0)expect(cards[i]!.top,`Filas ${i} y ${i+1} solapadas`).toBeGreaterThanOrEqual(cards[i-1]!.bottom+5);
+   }
    expect(before.region.overflowY).toBe('auto');
    // Ningún ancestro debe desplazar ni recortar el resto de la ficha.
    expect(before.modal.scrollHeight).toBeLessThanOrEqual(before.modal.clientHeight+2);
