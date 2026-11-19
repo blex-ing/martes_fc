@@ -70,6 +70,13 @@
 .match-modal .modal-footer .validation{margin:0;max-height:5em;overflow-y:auto}
 @media(max-width:700px){.modal.match-modal{max-height:calc(100dvh - 16px);padding-bottom:max(19px,env(safe-area-inset-bottom))}}
 
+/* #77: ficha de jugador desplazable con cabecera y cierre siempre visibles.
+   Se limita el cambio a profile-modal para conservar los estilos del resto. */
+.modal.profile-modal{display:flex;flex-direction:column;max-height:min(90dvh,850px);overflow:hidden;padding-bottom:max(24px,env(safe-area-inset-bottom))}
+.profile-modal .modal-head{flex:0 0 auto}
+.profile-modal .profile-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable;-webkit-overflow-scrolling:touch}
+@media(max-width:700px){.modal.profile-modal{max-height:calc(100dvh - 16px);padding-bottom:max(19px,env(safe-area-inset-bottom))}}
+
 /* Compactos: evitar que las acciones de cabecera ensanchen el viewport visual.
    Mantiene visible temporada y avatar sin modificar el Glass de las tarjetas. */
 @media(max-width:420px){
