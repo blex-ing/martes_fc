@@ -23,7 +23,11 @@ async function auditGeometry(page:Page,context:string,checkTouch=true){
    const r=el.getBoundingClientRect();
    return {name:el.getAttribute('aria-label')||el.textContent?.trim().slice(0,40)||el.className,width:r.width,height:r.height};
   });
-  return {scrollWidth:root.scrollWidth,clientWidth:root.clientWidth,innerWidth:window.innerWidth,buttons};
+  const offenders=[...root.querySelectorAll<HTMLElement>('*')].filter(el=>{
+   const r=el.getBoundingClientRect(),style=getComputedStyle(el);
+   return r.width>0&&style.position!=='fixed'&&(r.right>root.clientWidth+3||r.left< -3);
+  }).slice(0,12).map(el=>({element:el.tagName.toLowerCase(),className:typeof el.className==='string'?el.className.slice(0,100):'',right:Math.round(el.getBoundingClientRect().right)}));
+  return {scrollWidth:root.scrollWidth,clientWidth:root.clientWidth,innerWidth:window.innerWidth,buttons,offenders};
  },hitSelectors);
  expect(geometry.scrollWidth,JSON.stringify({context,geometry})).toBeLessThanOrEqual(geometry.clientWidth+2);
  expect(geometry.innerWidth,JSON.stringify({context,geometry})).toBeLessThanOrEqual((page.viewportSize()?.width??0)+2);
