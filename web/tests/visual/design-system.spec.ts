@@ -49,8 +49,8 @@ test('tokens compartidos y preferencia de movimiento reducido conservan la acces
  await page.goto('/');
  const action=page.locator('.ui-hybrid-control').first();
  await expect(action).toBeVisible();
- // La CTA heredada conserva 39 px: cambiar su geometría requeriría revisión visual explícita.
- await expect(action).toHaveCSS('min-height','39px');
+ // #37: la geometría desktop permanece intacta; móvil eleva el área táctil a 44 px.
+ await expect(action).toHaveCSS('min-height',(page.viewportSize()?.width??0)<=950?'44px':'39px');
  await expect(action).toHaveCSS('transition-duration','0s');
  const materials=await page.evaluate(()=>{
   const isolated=document.createElement('button');
