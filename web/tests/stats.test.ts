@@ -49,3 +49,24 @@ test('histórico voluminoso mantiene estadísticas sin filtrar cada jugador',()=
  const indexed=metricsByPlayer(players,bulk);
  for(const player of players)assert.deepEqual(indexed.get(player.id),playerMetrics(player,bulk));
 });
+
+test('fichas y portería reutilizan estadísticas equivalentes en historiales 0,1,2000+',()=>{
+ for(const count of [0,1,2000,2105]){
+  const history=Array.from({length:count},(_,i)=>({...seedMatches[i%seedMatches.length]!,id:'perf-'+i}));
+  const ranking=leaderboard(players,history);
+  const indexed=metricsByPlayer(players,history);
+  for(const athlete of players){
+   const reused=ranking.find(entry=>entry.p.id===athlete.id);
+   assert.ok(reused);
+   assert.deepEqual(indexed.get(athlete.id),playerMetrics(athlete,history));
+   const old=playerMetrics(athlete,history);
+   for(const stat of ['played','goals','saves','conceded','keeperPlayed','rate','clean'] as const){
+    assert.equal(reused[stat],old[stat],stat+' / '+athlete.id+' / '+count);
+   }
+  }
+  const keeper=players.find(p=>p.role==='Portero');
+  assert.ok(keeper);
+  const selected=ranking.find(entry=>entry.p.id===keeper.id);
+  assert.equal(selected?.saves,playerMetrics(keeper,history).saves);
+ }
+});
