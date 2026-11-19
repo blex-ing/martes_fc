@@ -70,13 +70,13 @@
 .match-modal .modal-footer .validation{margin:0;max-height:5em;overflow-y:auto}
 @media(max-width:700px){.modal.match-modal{max-height:calc(100dvh - 16px);padding-bottom:max(19px,env(safe-area-inset-bottom))}}
 
-/* #77: solo el historial desplaza; nombre, métricas y título permanecen fijos.
-   Mantiene los tamaños, colores, luces y superficies Glass originales. */
+/* #77: preservar las dimensiones naturales de la ficha.
+   Solo la lista del historial puede contraerse y desplazarse; las métricas no crecen ni se recortan. */
 .modal.profile-modal{display:flex;flex-direction:column;max-height:min(90dvh,850px);overflow:hidden;padding-bottom:max(24px,env(safe-area-inset-bottom))}
 .profile-modal .modal-head{flex:0 0 auto}
-.profile-modal .profile-content{display:flex;flex:1 1 auto;flex-direction:column;min-height:0;min-width:0;overflow:hidden}
-.profile-content > :not(.profile-history-scroll){flex-shrink:0}
-.profile-content .profile-history-scroll{flex:1 1 auto;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable;align-content:start;-webkit-overflow-scrolling:touch}
+.profile-modal .profile-content{display:flex;flex:0 1 auto;flex-direction:column;min-height:0;min-width:0}
+.profile-modal .profile-content > :not(.profile-history-scroll){flex:0 0 auto}
+.profile-modal .profile-history-scroll{flex:0 1 auto;min-height:0;min-width:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;grid-auto-rows:max-content;align-content:start;-webkit-overflow-scrolling:touch}
 @media(max-width:700px){.modal.profile-modal{max-height:calc(100dvh - 16px);padding-bottom:max(19px,env(safe-area-inset-bottom))}}
 
 /* Compactos: evitar que las acciones de cabecera ensanchen el viewport visual.
