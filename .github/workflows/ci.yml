@@ -112,7 +112,7 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - run: npm ci --no-audit --no-fund
-      - run: npx playwright install --with-deps webkit
+      - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:visual -- --project=mobile-webkit
       - name: Upload WebKit QA traces
         if: always()
