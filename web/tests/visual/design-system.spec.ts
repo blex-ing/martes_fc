@@ -35,7 +35,7 @@ test('contrato visual: captura de hero, KPI, portería, jugadores y modal sin al
  await expect(page.locator('.player-card').first()).toBeVisible();
  await page.screenshot({path:testInfo.outputPath('visual-players.png'),fullPage:true});
 
- await nav(page).getByRole('button',{name:/Inicio/}).click();
+ await nav(page).getByRole('button',{name:(page.viewportSize()?.width??0)<800?'Inicio':/Resumen general/}).click();
  await page.getByRole('button',{name:/Añadir partido/}).click();
  const dialog=page.getByRole('dialog');
  await expect(dialog).toBeVisible();
@@ -56,10 +56,10 @@ test('tokens compartidos y preferencia de movimiento reducido conservan la acces
   const card=getComputedStyle(document.querySelector<HTMLElement>('.panel.ui-hybrid-glass')!);
   const metric=getComputedStyle(document.querySelector<HTMLElement>('.metric')!,'::after');
   const hero=getComputedStyle(document.querySelector<HTMLElement>('.hero')!,'::before');
-  return {target:root.getPropertyValue('--touch-target-min').trim(),panel:card.position,metricGlow:metric.width,heroGlow:hero.width};
+  return {target:root.getPropertyValue('--touch-target-min').trim(),isolation:card.isolation,metricGlow:metric.width,heroGlow:hero.width};
  });
  expect(materials.target).toBe('44px');
- expect(materials.panel).toBe('relative');
+ expect(materials.isolation).toBe('isolate');
  expect(materials.metricGlow).toBe('70px');
  expect(materials.heroGlow).toBe('300px');
 });
