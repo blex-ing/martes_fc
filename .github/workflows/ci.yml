@@ -73,7 +73,10 @@ jobs:
 
   visual:
     name: Visual QA (Chromium)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    # Mismo runtime fijado por digest que WebKit: sin apt-get externo de Playwright.
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.1-noble@sha256:1507cbfc550a63a6b7396791ca4f00df17beb56342d2447b3f106c306f525579
     defaults:
       run:
         working-directory: web
@@ -86,7 +89,6 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - run: npm ci --no-audit --no-fund
-      - run: npx playwright install --with-deps chromium
       - run: npm run test:visual -- --project=desktop-chromium --project=tablet-chromium --project=compact-chromium --project=mobile-chromium
       - name: Upload visual report and screenshots
         if: always()
