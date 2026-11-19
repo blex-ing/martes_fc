@@ -10,7 +10,7 @@
 .ui-glass-nav{border-radius:var(--radius-shell)}
 .ui-soft-surface{background:var(--color-surface-solid);border:1px solid var(--color-border);border-radius:var(--radius-control)}
 .ui-chip{border-radius:var(--radius-pill);padding:var(--space-2) var(--space-3);border:1px solid var(--color-border)}
-.ui-button{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);min-height:44px;border-radius:var(--radius-control);font:inherit;cursor:pointer}
+.ui-button{display:inline-flex;align-items:center;justify-content:center;gap:var(--space-2);min-height:var(--touch-target-min);border-radius:var(--radius-control);font:inherit;cursor:pointer}
 .ui-button-primary{color:var(--color-background);background:var(--color-primary);border:1px solid var(--color-primary)}
 .ui-button-secondary{color:var(--color-text);background:var(--color-surface-solid);border:1px solid var(--color-border)}
 /* Hybrid Glass avanzado para React: enhancement óptico sin alterar geometría ni tipografía de master.
@@ -27,7 +27,7 @@
  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--color-text) 13%,transparent);
 }
 .ui-hybrid-glass > *{position:relative;z-index:1}
-.ui-hybrid-control{position:relative;isolation:isolate;min-height:44px;transition:filter var(--motion-fast) ease,transform var(--motion-fast) ease}
+.ui-hybrid-control{position:relative;isolation:isolate;min-height:var(--touch-target-min);transition:filter var(--motion-fast) ease,transform var(--motion-fast) ease}
 .ui-hybrid-control::after{
  content:'';position:absolute;inset:1px;pointer-events:none;border-radius:inherit;
  background:linear-gradient(155deg,color-mix(in srgb,var(--color-text) 21%,transparent),transparent 48%);
