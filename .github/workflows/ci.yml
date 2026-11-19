@@ -100,6 +100,10 @@ jobs:
   webkit:
     name: Visual QA (WebKit)
     runs-on: ubuntu-24.04
+    # Imagen oficial con navegadores y dependencias preinstalados.
+    # Coincide con @playwright/test 1.65.1 del package-lock.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.1-noble@sha256:1507cbfc550a63a6b7396791ca4f00df17beb56342d2447b3f106c306f525579
     defaults:
       run:
         working-directory: web
@@ -112,7 +116,6 @@ jobs:
           node-version: '24'
           package-manager-cache: false
       - run: npm ci --no-audit --no-fund
-      - run: npx playwright install --with-deps chromium webkit
       - run: npm run test:visual -- --project=mobile-webkit
       - name: Upload WebKit QA traces
         if: always()
