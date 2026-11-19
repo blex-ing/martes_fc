@@ -34,6 +34,8 @@ jobs:
       - run: npm test
       - run: npm run test:worker
       - run: python3 scripts/check-concurrent-update.py
+      - run: python3 scripts/check-snapshot-bounds.py
+      - run: npm run bench:stats
       - name: Validate SQL migrations and referential integrity
         run: |
           python3 - <<'PY'
