@@ -84,7 +84,7 @@
 
 /* #37: zonas táctiles >=44 px en dispositivos de puntero grueso.
    Solo amplía los controles, sin modificar fondos, colores ni brillos Liquid Glass. */
-@media(max-width:950px) and (pointer:coarse){
+@media(max-width:950px){
  .primary-btn,.secondary-btn,.outline-btn,.tab-btn,.icon-btn,
  .match-row-btn,.mobile-nav-item,.text-link,.player-card-foot button{
   min-height:var(--touch-target-min);
@@ -94,5 +94,5 @@
 }
 /* Los nombres de D1 pueden tener la longitud máxima permitida: no deben abrir la vista. */
 @media(max-width:950px){
- .hero-club,.bar-identity span,.match-detail-caption{min-width:0;overflow-wrap:anywhere}
+ .hero-club,.bar-identity span,.match-detail-caption,.player-card h3,.profile-top h2{min-width:0;overflow-wrap:anywhere}
 }
