@@ -1,6 +1,6 @@
 # Sistema de diseño — MARTES FC
 
-**Versión visual:** 1.0.0. Contrato obligatorio para nuevas features.
+**Versión visual:** 1.0.0, con referencia aprobada de master v0.2.1 y revisiones de calidad hasta v0.3.6. Contrato obligatorio para nuevas features.
 **Referencia de gobernanza:** documentacion/DESIGN_SYSTEM_MINI_PODCAST.md del repositorio blex-ing/mini_podcast.
 **Referencia de inspiración iOS:** skill oficial de OpenAI swiftui-liquid-glass: https://github.com/openai/plugins/blob/main/plugins/build-ios-apps/skills/swiftui-liquid-glass/SKILL.md
 
@@ -9,6 +9,7 @@
 - web/src/styles/primitives.css: materiales y controles compartidos y los fallbacks de accesibilidad.
 - web/styles.css: estilos históricos de layouts y componentes. Sus colores preexistentes quedan congelados y se migrarán gradualmente.
 - web/scripts/check-design-system.mjs: quality gate obligatorio; bloquea literales nuevos fuera de tokens, comprueba materiales y accesibilidad.
+- web/scripts/check-css-usage.mjs: verifica referencias a clases en TSX/TS/HTML, clases dinámicas y API opt-in documentada. Falla si aparecen selectores huérfanos.
 - web/scripts/design-legacy-colors.json: presupuesto exacto por literal de los dos archivos heredados (web/styles.css y web/src/App.tsx); no aumentarlo.
 
 ## 2. Jerarquía
@@ -69,7 +70,7 @@ El stylesheet original aún contiene literales de color. Esta feature no los sus
 
 El propietario solicitó extender el efecto Glass híbrido a la mayor parte de la aplicación sin cambiar los tamaños, las tipografías, los gradientes originales ni la jerarquía de master.
 
-- `ui-hybrid-glass`: aplicado a navegación lateral/móvil, hero, marcador principal, las cuatro KPI, paneles, tarjetas individuales, formularios administrativos y modal.
+- `ui-hybrid-glass`: aplicado a navegación lateral/móvil, paneles, tarjetas individuales, formularios administrativos y modal. **No** se aplica directamente a hero, marcador ni KPI porque sus brillos propios deben conservarse.
 - `ui-hybrid-control`: CTA de acción principal, también en Administración.
 - El mecanismo añade una capa especular estática y una línea de luz interior mediante pseudoelementos; **no sustituye** `background`, `border`, `font`, `padding` o `box-shadow` de componentes existentes.
 - No duplica `backdrop-filter` sobre el Glass preexistente; no activa un `requestAnimationFrame` ni seguimiento continuo del cursor.
@@ -88,3 +89,16 @@ El propietario solicitó extender el efecto Glass híbrido a la mayor parte de l
 La clase general `ui-hybrid-glass` añade pseudoelementos y contexto de apilamiento, que pueden alterar su composición aun si `background` y las fuentes no cambian. Mantener `glass` normal y las clases originales en dichas superficies. Usar el efecto híbrido en otros paneles y navegación donde no compita con pseudoelementos con significado visual.
 
 La prueba visual comprueba explícitamente el fondo, los dos círculos del hero y el halo de KPI en escritorio y móvil. Cualquier evolución del material debe reemplazar esos efectos de forma explícita, con comparación visual aprobada, no por adición automática.
+
+## 10. Inventario y prevención de CSS huérfano (issue #34)
+
+La auditoría sobre la versión `v0.3.6` identificó **cero clases huérfanas no justificadas** en los stylesheets activos. Las clases antiguas `.score-grid`, `.score-stat`, `.keeper-identity`, `.keeper-avatar` y `.keeper-information` ya no están definidas y se mantiene una comprobación de regresión que impide reintroducirlas.
+
+Las siguientes clases **no deben eliminarse por una búsqueda textual simple**:
+
+- `.tone-cyan`, `.tone-purple`, `.tone-pink`, `.tone-green`: se componen dinámicamente en `Metric` con `'metric glass tone-'+tone`, y sí se renderizan en el DOM.
+- `.ui-glass-primary`, `.ui-glass-card`, `.ui-glass-nav`, `.ui-soft-surface`, `.ui-chip`, `.ui-button`, `.ui-button-primary`, `.ui-button-secondary`: son API pública **opt-in** del sistema de diseño para componentes futuros, documentada en la jerarquía de la sección 2. No se inyectan masivamente en las vistas actuales.
+
+El comando `cd web && npm run check:design` ejecuta también `check-css-usage.mjs`: cualquier nueva clase definida sin referencia en el código o sin excepción de API explícita hace fallar CI. La revisión automática es conservadora y no sustituye analizar clases generadas por código ni efectos de cascada en casos especiales. El control `--touch-target-min` centraliza 44 px para las primitivas compartidas sin cambiar sus dimensiones calculadas. **Límite conocido:** la CTA heredada `.primary-btn.ui-hybrid-control` sigue recibiendo `min-height:39px` desde `web/styles.css` (cascada posterior). Se preserva deliberadamente este tamaño en #34 para no mover la interfaz; elevar el área táctil a 44 px requiere una corrección UX con capturas comparativas y aprobación visual.
+
+**Pruebas visuales:** las suites Playwright de Chromium (320, 390, 768, 1440 px) y WebKit móvil guardan capturas para comparar hero, marcador, KPI, Portería, paneles y modal. El contrato visual de CSS verifica además propiedades computadas de las superficies. Las capturas generadas en CI son evidencias por ejecución; no deben presentarse como snapshots de píxel con baseline aprobada hasta que se incorporen y validen dichas imágenes de referencia. Una prueba manual de Safari en iPhone real sigue dentro de #37.
