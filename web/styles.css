@@ -69,3 +69,11 @@
 .match-modal .modal-actions{display:flex;justify-content:flex-end;gap:9px}
 .match-modal .modal-footer .validation{margin:0;max-height:5em;overflow-y:auto}
 @media(max-width:700px){.modal.match-modal{max-height:calc(100dvh - 16px);padding-bottom:max(19px,env(safe-area-inset-bottom))}}
+
+/* Compactos: evitar que las acciones de cabecera ensanchen el viewport visual.
+   Mantiene visible temporada y avatar sin modificar el Glass de las tarjetas. */
+@media(max-width:380px){
+ .topbar{height:auto;min-height:65px;flex-wrap:wrap;column-gap:8px;row-gap:6px;padding:9px 0}
+ .top-actions{margin-left:auto}
+ .mobile-nav-item{min-width:0;flex:1;padding:5px 3px}
+}
