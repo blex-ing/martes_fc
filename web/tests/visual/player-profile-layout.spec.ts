@@ -65,6 +65,23 @@ for(const role of ['Jugador','Portero'] as const){
    const history=dialog.getByRole('region',{name:'Historial de partidos'});
    const rows=history.locator('.match-row');
    await expect(rows).toHaveCount(count);
+   // El viewport de scroll y el grid de filas son nodos distintos.
+   await expect(history.locator('.profile-history-list')).toHaveCount(1);
+   await expect(history.locator('.profile-history-list .match-row')).toHaveCount(count);
+   await expect(dialog.locator('.profile-history-title')).toHaveCSS('display','flex');
+   await expect(history).toHaveCSS('overflow-y','auto');
+   const structure=await history.evaluate(node=>{
+    const list=node.querySelector<HTMLElement>('.profile-history-list')!;
+    const heading=node.parentElement?.querySelector<HTMLElement>('.profile-history-title');
+    const viewport=node.getBoundingClientRect(),title=heading?.getBoundingClientRect();
+    return {display:getComputedStyle(list).display,rows:getComputedStyle(list).gridAutoRows,
+      titledBeforePanel:!!title&&title.bottom<viewport.top,
+      panelBorder:getComputedStyle(node).borderTopWidth};
+   });
+   expect(structure.display).toBe('grid');
+   expect(structure.rows).toBe('max-content');
+   expect(structure.titledBeforePanel).toBe(true);
+   expect(parseFloat(structure.panelBorder)).toBeGreaterThan(0);
    await expect(dialog.getByRole('button',{name:'Cerrar'})).toBeInViewport();
    await expect(dialog.locator('.profile-top')).toBeInViewport();
    await expect(dialog.locator('.profile-numbers')).toBeInViewport();
