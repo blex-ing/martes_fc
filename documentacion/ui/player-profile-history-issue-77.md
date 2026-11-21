@@ -53,3 +53,13 @@ No se ha alterado el modelo de datos, API, Worker, Cloudflare D1 ni el comportam
 - Se eliminó `profile-preview.ts`, la activación `?previewHistory=1`, sus referencias en `App.tsx` y su test anterior.
 - Las pruebas automáticas generan sus fixtures *en Playwright*, interceptando la API; nunca escriben en D1. Cubren jugador y portero en 0/1/5/20/50 partidos, foco/teclado, cierre, altura natural y scroll único.
 - No dar por superado CI hasta obtener resultados de los jobs correspondientes al SHA final; los enlaces previos de CI corresponden a revisiones anteriores.
+
+## Corrección de navegación por teclado en Chromium — 21/11/2026
+
+### Evidencia y diagnóstico
+- GitHub Actions 44867820818: TypeScript/lint/build y QA WebKit correctos; Chromium falló en la prueba `historial accesible: foco, teclado y métricas de portero` en los tamaños mobile, compact y tablet.
+- La secuencia enfocaba la región desplazable, `PageDown` sí modificaba el `scrollTop`, pero después de pulsar `End` la última fila seguía fuera del viewport (ratio 0); por tanto, el comportamiento nativo de `End` no garantizaba llegar al final de la región interna en esos entornos.
+- No se elimina ni relaja la prueba. En `ProfileHistory` se gestiona exclusivamente `Home`/`End` cuando el foco está sobre la región y hay contenido desplazable. Se previene el comportamiento predeterminado y se actualiza directamente su `scrollTop`; flechas, `PageDown`, `PageUp`, tabulación y Escape siguen siendo nativos.
+- La prueba se amplió para confirmar que `End` alcanza `scrollHeight-clientHeight`, que la última fila está en el viewport, que `Home` regresa a cero y que la primera fila se ve, con foco y cabecera estables. Aplicable a portero y jugador por compartir componente.
+
+**Validación pendiente:** confirmar CI del nuevo commit y revisión de Cloudflare; no afirmar aceptación completa hasta tener jobs verdes.
