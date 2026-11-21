@@ -21,8 +21,8 @@ export const previewHistoryMatches:Match[]=Array.from({length:30},(_,index)=>{
  const goals=goalsFor===0?0:index%3===0?0:Math.min(2,goalsFor);
  return {
   id:`preview-history-${index+1}`,date:day,opponent:opponents[index%opponents.length]!,
-  goalsFor,goalsAgainst,appearances:[previewHistoryPlayer.id],
-  goals:{[previewHistoryPlayer.id]:goals},
+  goalsFor,goalsAgainst,appearances:[previewHistoryPlayer.id,'preview-history-teammate'],
+  goals:{[previewHistoryPlayer.id]:goals,'preview-history-teammate':goalsFor-goals},
   goalkeeperId:null,saves:0,status:'finished'
  };
 });
