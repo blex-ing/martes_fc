@@ -84,6 +84,8 @@ for(const role of ['Jugador','Portero'] as const){
    expect(parseFloat(structure.panelBorder)).toBeGreaterThan(0);
    await expect(dialog.getByRole('button',{name:'Cerrar'})).toBeInViewport();
    await expect(dialog.locator('.profile-top')).toBeInViewport();
+   await expect(dialog.locator('.profile-stat-icon svg')).toHaveCount(3);
+   await expect(history.locator('.profile-history-emblem svg')).toHaveCount(count);
    await expect(dialog.locator('.profile-numbers')).toBeInViewport();
    await expect(dialog.locator('.profile-history-title')).toBeInViewport();
    if(role==='Portero')await expect(dialog.locator('.keeper-methodology')).toBeInViewport();
