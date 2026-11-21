@@ -35,18 +35,6 @@ Referencia: maqueta validada en la conversación del 21/11/2026 (ficha de Ander,
 - Revisar preview de Cloudflare en SHA concreto y comprobar con navegador real al menos móvil y desktop.
 - No publicar una versión ni dar por resuelta #77 sin estas verificaciones; coordinar el cambio con la PR de release #85 todavía pendiente.
 
-## Vista previa de aceptación con datos ficticios (solo rama feature)
-Para comprobar el scroll sin depender de la base Cloudflare D1:
-1. Abrir la URL **real** del preview de Cloudflare de `feature/issue-77-history-panel-ux`.
-2. Añadir `?previewHistory=1` al final (o `&previewHistory=1` si ya hay parámetros).
-3. Se abre la ficha de **Ander (DEMO)** con **30 partidos ficticios**. Hacer scroll dentro del panel; confirmar que nombre, estadísticas y título no se mueven.
-4. Cerrar la ficha para volver a ver el comportamiento normal y las estadísticas originales de la app.
-5. Para regresar a la demo, recargar esa misma URL con el parámetro.
-
-**Aislamiento:** estos partidos se generan en memoria desde `web/src/data/profile-preview.ts`; no se guardan en `localStorage`, no llaman a mutaciones de D1 y no alteran el resto de las estadísticas. Si D1 falla, las demás vistas mantienen su estado de no disponible. El rótulo «30 partidos ficticios» evita confundirlos con históricos reales.
-
-**Entrega:** el mecanismo y su fixture son temporales para revisión visual de PR #86. Antes de fusionar hacia release/`master`, eliminar el preview por URL y el fixture (mantener los tests automatizados sin rutas de demo públicas), o justificar expresamente una solución de preview restringida al entorno de pruebas.
-
 ## Segunda iteración de fidelidad visual (21/11/2026)
 Tras aceptar el funcionamiento del scroll, se completó el diseño hacia la maqueta de referencia:
 - Tres tarjetas de estadísticas con iconos **SVG propios** (camiseta, balón, gráfico vertical), generados como SVG inline en el componente reutilizable `ProfileGlyph.tsx`. No emplean icon-font, CDN, imágenes raster ni paquetes adicionales.
@@ -55,4 +43,13 @@ Tras aceptar el funcionamiento del scroll, se completó el diseño hacia la maqu
 - Reglas responsive acotadas al modal, incluido modo compacto a 420px y alturas cortas; la cabecera y el título siguen fuera del scroll.
 - Comprobación Playwright adicional del número de iconos SVG y escudos por encuentro.
 
-No se ha alterado el modelo de datos, API, Worker, Cloudflare D1 ni el comportamiento de otros listados. El preview temporal `?previewHistory=1` continúa disponible en la rama feature para validar manualmente estos cambios; **no publicarlo en master**. CI y revisión visual real siguen siendo condiciones de aceptación.
+No se ha alterado el modelo de datos, API, Worker, Cloudflare D1 ni el comportamiento de otros listados. El preview temporal `?previewHistory=1` y sus fixtures se retiraron antes del merge. CI y revisión visual real siguen siendo condiciones de aceptación.
+
+## Refactorización y endurecimiento antes del merge
+- La ficha compartida por jugador/portero es un orquestador: `ProfileIdentity`, `ProfileStats`, `ProfileHistory`, `ProfileHistoryRow` y `ProfileGlyph`.
+- Los colores de la ficha y del SVG se centralizaron en `src/styles/tokens.css` conforme al control `check:design`, sin ampliar excepciones al linter.
+- Se consolidaron reglas duplicadas de filas, etiquetas y breakpoints CSS sin modificar la apariencia aceptada.
+- El encabezado de la región desplazable usa `useId()` y `aria-labelledby`; el área admite teclado, y Escape cierra el diálogo.
+- Se eliminó `profile-preview.ts`, la activación `?previewHistory=1`, sus referencias en `App.tsx` y su test anterior.
+- Las pruebas automáticas generan sus fixtures *en Playwright*, interceptando la API; nunca escriben en D1. Cubren jugador y portero en 0/1/5/20/50 partidos, foco/teclado, cierre, altura natural y scroll único.
+- No dar por superado CI hasta obtener resultados de los jobs correspondientes al SHA final; los enlaces previos de CI corresponden a revisiones anteriores.
