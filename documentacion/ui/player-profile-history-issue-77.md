@@ -34,3 +34,15 @@ Referencia: maqueta validada en la conversación del 21/11/2026 (ficha de Ander,
 - Ejecutar `npm ci`, lint, TypeScript, tests y Playwright con capturas comparadas.
 - Revisar preview de Cloudflare en SHA concreto y comprobar con navegador real al menos móvil y desktop.
 - No publicar una versión ni dar por resuelta #77 sin estas verificaciones; coordinar el cambio con la PR de release #85 todavía pendiente.
+
+## Vista previa de aceptación con datos ficticios (solo rama feature)
+Para comprobar el scroll sin depender de la base Cloudflare D1:
+1. Abrir la URL **real** del preview de Cloudflare de `feature/issue-77-history-panel-ux`.
+2. Añadir `?previewHistory=1` al final (o `&previewHistory=1` si ya hay parámetros).
+3. Se abre la ficha de **Ander (DEMO)** con **30 partidos ficticios**. Hacer scroll dentro del panel; confirmar que nombre, estadísticas y título no se mueven.
+4. Cerrar la ficha para volver a ver el comportamiento normal y las estadísticas originales de la app.
+5. Para regresar a la demo, recargar esa misma URL con el parámetro.
+
+**Aislamiento:** estos partidos se generan en memoria desde `web/src/data/profile-preview.ts`; no se guardan en `localStorage`, no llaman a mutaciones de D1 y no alteran el resto de las estadísticas. Si D1 falla, las demás vistas mantienen su estado de no disponible. El rótulo «30 partidos ficticios» evita confundirlos con históricos reales.
+
+**Entrega:** el mecanismo y su fixture son temporales para revisión visual de PR #86. Antes de fusionar hacia release/`master`, eliminar el preview por URL y el fixture (mantener los tests automatizados sin rutas de demo públicas), o justificar expresamente una solución de preview restringida al entorno de pruebas.
