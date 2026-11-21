@@ -102,3 +102,62 @@ test('al cerrar el modal con Escape se devuelve el foco al botón de apertura',a
  await expect(page.getByRole('dialog')).toHaveCount(0);
  await expect(add).toBeFocused();
 });
+
+/**
+ * #37 — La edición del rol debe sincronizar la vista de Portería tras el
+ * snapshot actualizado, sin recargar el documento ni alterar datos reales.
+ * D1 y Access están simulados exclusivamente mediante rutas Playwright.
+ */
+test('cambio de rol sin historial: administración y selector de porteros permanecen sincronizados',async({page})=>{
+ let players=baseSnapshot.players.map(p=>({...p}));
+ let patches=0;
+ await page.route('**/api/public/snapshot',route=>route.fulfill({
+  status:200,contentType:'application/json',
+  body:JSON.stringify({...baseSnapshot,players})
+ }));
+ await page.route('**/api/admin/session',route=>route.fulfill({
+  status:200,contentType:'application/json',body:'{"ok":true}'
+ }));
+ await page.route('**/api/admin/players/p2',async route=>{
+  expect(route.request().method()).toBe('PATCH');
+  const payload=route.request().postDataJSON() as {name?:string;role?:string};
+  expect(payload.name).toBe('Jugador prueba');
+  expect(['Portero','Jugador']).toContain(payload.role);
+  patches++;
+  players=players.map(p=>p.id==='p2'?{...p,role:payload.role as 'Portero'|'Jugador'}:p);
+  await route.fulfill({status:200,contentType:'application/json',body:'{"ok":true}'});
+ });
+ await page.goto('/?admin=1');
+ await expect(page.getByText('Sesión de administrador verificada.')).toBeVisible();
+ const row=page.locator('.admin-row').filter({hasText:'Jugador prueba'});
+ await row.getByRole('button',{name:'Editar'}).click();
+ let form=page.getByRole('form',{name:'Editar jugador Jugador prueba'});
+ await form.getByRole('combobox',{name:'Posición'}).selectOption('Portero');
+ await form.getByRole('button',{name:'Guardar cambios'}).click();
+ await expect(row).toContainText('Jugador prueba · Portero');
+ expect(patches).toBe(1);
+
+ const navigation=page.getByRole('navigation',{
+  name:(page.viewportSize()?.width??0)<800?'Navegación móvil':'Secciones'
+ });
+ await navigation.getByRole('button',{name:/Portería/}).click();
+ const picker=page.getByRole('combobox',{name:'Seleccionar portero'});
+ await expect(picker).toBeVisible();
+ await expect(picker.locator('option')).toHaveCount(2);
+ await picker.selectOption('p2');
+ await expect(page.getByRole('heading',{name:'Jugador prueba'})).toBeVisible();
+
+ // Acceso directo a administración: también funciona con sidebar oculta en móvil.
+ await page.goto('/?admin=1');
+ await expect(page.getByText('Sesión de administrador verificada.')).toBeVisible();
+ const secondRow=page.locator('.admin-row').filter({hasText:'Jugador prueba'});
+ await secondRow.getByRole('button',{name:'Editar'}).click();
+ form=page.getByRole('form',{name:'Editar jugador Jugador prueba'});
+ await form.getByRole('combobox',{name:'Posición'}).selectOption('Jugador');
+ await form.getByRole('button',{name:'Guardar cambios'}).click();
+ await expect(secondRow).toContainText('Jugador prueba · Jugador');
+ expect(patches).toBe(2);
+ await navigation.getByRole('button',{name:/Portería/}).click();
+ await expect(page.getByRole('combobox',{name:'Seleccionar portero'})).toHaveCount(0);
+ await expect(page.getByRole('heading',{name:'Portero prueba'})).toBeVisible();
+});
