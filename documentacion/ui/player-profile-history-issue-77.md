@@ -46,3 +46,13 @@ Para comprobar el scroll sin depender de la base Cloudflare D1:
 **Aislamiento:** estos partidos se generan en memoria desde `web/src/data/profile-preview.ts`; no se guardan en `localStorage`, no llaman a mutaciones de D1 y no alteran el resto de las estadísticas. Si D1 falla, las demás vistas mantienen su estado de no disponible. El rótulo «30 partidos ficticios» evita confundirlos con históricos reales.
 
 **Entrega:** el mecanismo y su fixture son temporales para revisión visual de PR #86. Antes de fusionar hacia release/`master`, eliminar el preview por URL y el fixture (mantener los tests automatizados sin rutas de demo públicas), o justificar expresamente una solución de preview restringida al entorno de pruebas.
+
+## Segunda iteración de fidelidad visual (21/11/2026)
+Tras aceptar el funcionamiento del scroll, se completó el diseño hacia la maqueta de referencia:
+- Tres tarjetas de estadísticas con iconos **SVG propios** (camiseta, balón, gráfico vertical), generados como SVG inline en el componente reutilizable `ProfileGlyph.tsx`. No emplean icon-font, CDN, imágenes raster ni paquetes adicionales.
+- Escudo SVG vectorial con degradado cian/violeta e inicial del rival, reutilizado por cada fila.
+- Espaciados y contornos Glass coherentes, badge de rol, tarjetas con borde iluminado sutil y estados de partido diferenciados cromáticamente.
+- Reglas responsive acotadas al modal, incluido modo compacto a 420px y alturas cortas; la cabecera y el título siguen fuera del scroll.
+- Comprobación Playwright adicional del número de iconos SVG y escudos por encuentro.
+
+No se ha alterado el modelo de datos, API, Worker, Cloudflare D1 ni el comportamiento de otros listados. El preview temporal `?previewHistory=1` continúa disponible en la rama feature para validar manualmente estos cambios; **no publicarlo en master**. CI y revisión visual real siguen siendo condiciones de aceptación.
