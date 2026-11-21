@@ -46,3 +46,52 @@ jobs:
           fi
           echo '::error::Safe deletion failed; manual verification required'
           exit 1
+
+  audited_historical_cleanup:
+    name: One-time verified cleanup of two already-merged PR branches
+    # Job is intentionally bound to this exact reviewed cleanup PR only.
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'develop' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'feature/maintenance-cleanup-verified-20261121'
+    permissions:
+      contents: write
+      pull-requests: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify original merged PR and lease before deleting each historical ref
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Exactly two historical branches, both merged via squash; do not expand.
+          while IFS='|' read -r pr branch sha; do
+            [ -n "$pr" ] || continue
+            gh api "repos/${GH_REPO}/pulls/${pr}" \
+              --jq ".merged == true and .head.ref == \"${branch}\" and .head.sha == \"${sha}\"" \
+              | grep -qx true || { echo "::error::PR ${pr} has no verified merged head"; exit 1; }
+            ref="refs/heads/${branch}"
+            actual="$(git ls-remote --heads origin "${ref}" | awk '{print $1}')"
+            if [ -z "$actual" ]; then
+              echo "Already absent: ${branch}"
+              continue
+            fi
+            if [ "$actual" != "$sha" ]; then
+              echo "::error::Ref advanced; preserving ${branch}"
+              exit 1
+            fi
+            auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+            git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic ${auth}" \
+              push --force-with-lease="${ref}:${sha}" origin ":${ref}"
+            echo "Verified deletion: ${branch} (${sha})"
+          done <<'MERGED_BRANCHES'
+          52|fix/match-modal-scroll-footer|6d0da136bbdbf910b2659c56da02413637e4f1c4
+          59|docs/issue-38-current-stack-safe|0380ed7dbc797bc0992a7a396fe5a9408803c56e
+          MERGED_BRANCHES
