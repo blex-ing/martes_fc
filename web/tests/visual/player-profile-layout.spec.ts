@@ -159,31 +159,36 @@ test('pantalla de 320×568: portero y 50 partidos sin desplazar el modal',async(
  await page.screenshot({path:testInfo.outputPath('profile-short-height-keeper.png')});
 });
 
-test('preview manual #77: 30 partidos ficticios, panel con scroll y sin cambios de datos',async({page})=>{
- let requests=0;
- await page.route('**/api/public/snapshot',route=>{
-  requests++;
-  return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({code:'database_unavailable'})});
- });
+// La ficha de portero usa exactamente el mismo panel, incluyendo navegación por teclado.
+test('historial accesible: foco, teclado y métricas de portero',async({page})=>{
+ const dialog=await openProfile(page,30,'Portero');
+ const heading=dialog.locator('.profile-history-title');
+ const history=dialog.getByRole('region',{name:'Historial de partidos'});
+ const headingId=await heading.getAttribute('id');
+ expect(headingId).toBeTruthy();
+ expect(await history.getAttribute('aria-labelledby')).toBe(headingId);
+ await expect(dialog.locator('.profile-numbers')).toContainText('Paradas');
+ await expect(dialog.locator('.keeper-methodology')).toBeVisible();
+ await expect(history.locator('.match-row')).toHaveCount(30);
+ await expect(history.locator('.match-result').first()).toContainText('paradas');
+ await history.focus();
+ await expect(history).toBeFocused();
+ const before=await history.evaluate(el=>el.scrollTop);
+ await page.keyboard.press('PageDown');
+ await expect.poll(()=>history.evaluate(el=>el.scrollTop)).toBeGreaterThan(before);
+ await expect(dialog.locator('.profile-top')).toBeInViewport();
+ await expect(heading).toBeInViewport();
+ await page.keyboard.press('End');
+ await expect(history.locator('.match-row').last()).toBeInViewport();
+ await page.keyboard.press('Escape');
+ await expect(dialog).toHaveCount(0);
+});
+
+test('ningún query param de demo abre un perfil ficticio',async({page})=>{
+ await page.route('**/api/public/snapshot',route=>route.fulfill({
+  status:503,contentType:'application/json',body:'{"code":"database_unavailable"}'
+ }));
  await page.goto('/?previewHistory=1');
- const dialog=page.getByRole('dialog',{name:'Ficha del jugador'});
- await expect(dialog).toBeVisible();
- await expect(dialog.getByText('Ander (DEMO)')).toBeVisible();
- await expect(dialog.getByText('30 partidos ficticios')).toBeVisible();
- const region=dialog.getByRole('region',{name:'Historial de partidos'});
- const rows=region.locator('.match-row');
- await expect(rows).toHaveCount(30);
- await expect(dialog.locator('.profile-numbers')).toBeInViewport();
- const title=await dialog.locator('.profile-history-title').boundingBox();
- const before=await dialog.locator('.profile-top').boundingBox();
- const hasOverflow=await region.evaluate(el=>el.scrollHeight>el.clientHeight);
- expect(hasOverflow).toBe(true);
- await region.evaluate(el=>{el.scrollTop=el.scrollHeight;});
- await expect(rows.last()).toBeInViewport();
- const after=await dialog.locator('.profile-top').boundingBox();
- const titleAfter=await dialog.locator('.profile-history-title').boundingBox();
- expect(after?.y).toBeCloseTo(before!.y,0);
- expect(titleAfter?.y).toBeCloseTo(title!.y,0);
- expect(requests).toBeGreaterThan(0);
- await expect(page.locator('.side-info strong')).toHaveText('Conexión D1 interrumpida');
+ await expect(page.getByRole('dialog',{name:'Ficha del jugador'})).toHaveCount(0);
+ await expect(page.getByText('Ander (DEMO)')).toHaveCount(0);
 });
