@@ -7,8 +7,8 @@ export function ProfileGlyph({name,className}:{name:ProfileGlyphName;className?:
  const gradientId=useId();
  if(name==='shield')return <svg className={className} viewBox="0 0 40 44" fill="none" aria-hidden="true" focusable="false">
   <defs><linearGradient id={gradientId} x1="4" y1="2" x2="38" y2="42" gradientUnits="userSpaceOnUse"><stop stopColor="var(--cyan)"/><stop offset="1" stopColor="var(--violet)"/></linearGradient></defs>
-  <path d="M20 2 36 8v13c0 10.5-6.5 17-16 21C10.5 38 4 31.5 4 21V8L20 2Z" fill="var(--profile-svg-01)" stroke={`url(#${gradientId})`} strokeWidth="2.3" strokeLinejoin="round"/>
-  <path d="M20 6.5 32 11v10c0 7.6-4.4 13.1-12 16.6C12.4 34.1 8 28.6 8 21V11L20 6.5Z" stroke="var(--profile-svg-02)" strokeWidth="1"/>
+  <path d="M20 2 36 8v13c0 10.5-6.5 17-16 21C10.5 38 4 31.5 4 21V8L20 2Z" fill="var(--profile-shield-surface)" stroke={`url(#${gradientId})`} strokeWidth="2.3" strokeLinejoin="round"/>
+  <path d="M20 6.5 32 11v10c0 7.6-4.4 13.1-12 16.6C12.4 34.1 8 28.6 8 21V11L20 6.5Z" stroke="var(--profile-shield-inner-line)" strokeWidth="1"/>
  </svg>;
  return <svg className={className} viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
  {name==='shirt'?<path d="m9 4 4-1.5c1.2 3.2 4.8 3.2 6 0L23 4l6 6.5-4.5 4-2.5-2V28H10V12.5l-2.5 2-4.5-4L9 4Z"/>:null}
