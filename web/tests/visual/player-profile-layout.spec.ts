@@ -156,3 +156,32 @@ test('pantalla de 320×568: portero y 50 partidos sin desplazar el modal',async(
  expect(after.content.scrollTop).toBe(0);
  await page.screenshot({path:testInfo.outputPath('profile-short-height-keeper.png')});
 });
+
+test('preview manual #77: 30 partidos ficticios, panel con scroll y sin cambios de datos',async({page})=>{
+ let requests=0;
+ await page.route('**/api/public/snapshot',route=>{
+  requests++;
+  return route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({code:'database_unavailable'})});
+ });
+ await page.goto('/?previewHistory=1');
+ const dialog=page.getByRole('dialog',{name:'Ficha del jugador'});
+ await expect(dialog).toBeVisible();
+ await expect(dialog.getByText('Ander (DEMO)')).toBeVisible();
+ await expect(dialog.getByText('30 partidos ficticios')).toBeVisible();
+ const region=dialog.getByRole('region',{name:'Historial de partidos'});
+ const rows=region.locator('.match-row');
+ await expect(rows).toHaveCount(30);
+ await expect(dialog.locator('.profile-numbers')).toBeInViewport();
+ const title=await dialog.locator('.profile-history-title').boundingBox();
+ const before=await dialog.locator('.profile-top').boundingBox();
+ const hasOverflow=await region.evaluate(el=>el.scrollHeight>el.clientHeight);
+ expect(hasOverflow).toBe(true);
+ await region.evaluate(el=>{el.scrollTop=el.scrollHeight;});
+ await expect(rows.last()).toBeInViewport();
+ const after=await dialog.locator('.profile-top').boundingBox();
+ const titleAfter=await dialog.locator('.profile-history-title').boundingBox();
+ expect(after?.y).toBeCloseTo(before!.y,0);
+ expect(titleAfter?.y).toBeCloseTo(title!.y,0);
+ expect(requests).toBeGreaterThan(0);
+ await expect(page.getByText('Conexión D1 interrumpida')).toBeVisible();
+});
