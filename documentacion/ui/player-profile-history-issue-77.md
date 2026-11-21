@@ -1,0 +1,36 @@
+# MARTES FC — Especificación UX/UI: ficha del jugador e historial (issue #77)
+
+Estado: **diseño aprobado por el usuario, implementación en revisión**. Esta especificación prevalece frente a las soluciones parciales anteriores de la issue #77.
+
+## Problema observado
+En la captura aportada, el título «Historial de partidos» está pegado a las estadísticas y las tarjetas de historial se comprimen y cambian de aspecto. La solución anterior mezclaba el área desplazable con el grid de filas, sin panel visual independiente.
+
+## Objetivo visual aprobado
+Referencia: maqueta validada en la conversación del 21/11/2026 (ficha de Ander, tema oscuro Liquid Glass, panel de historial delimitado y barra de desplazamiento visible). La maqueta es referencia de jerarquía y comportamiento, no una instrucción de sustituir globalmente colores ni elementos de la app.
+
+- Zona inmóvil: título «Ficha del jugador», cerrar, avatar, nombre, rol, tarjetas de estadísticas y título «Historial de partidos», incluida la metodología si es portero.
+- Sección de historial con separación superior perceptible, título alineado con acento cian, margen inferior y un panel Glass delimitado.
+- Solo el interior del panel de historial puede desplazarse. El panel mantiene un alto natural cuando hay pocos partidos y se contrae cuando hay muchos.
+- Cada encuentro conserva su alto natural, padding, borde, información de rival/fecha, goles/paradas y estado. No se permite repartir la altura disponible a partes iguales ni comprimir filas.
+- Scrollbar discreta visible cuando haya overflow, sin abrir scroll horizontal. Sutil textura y profundidad (no parallax real ni efectos que alteren la lectura).
+- Responsive desde 320px y en alturas cortas. Accesible por teclado y con etiqueta de región ligada al título.
+
+## Arquitectura y decisiones
+- `PlayerProfile` conserva cálculo de historial y contenido; no mueve lógica a `App`.
+- `.profile-history-scroll` es exclusivamente viewport con `overflow-y:auto`, `min-height:0`, `overscroll-behavior:contain` y `tabIndex=0`.
+- `.profile-history-list` es grid interno con `grid-auto-rows:max-content` y espaciado entre filas. Se evita aplicar reglas globales a `.match-row`.
+- El título es un `h3` fuera del contenedor scrollable, asociado con `aria-labelledby`.
+- Todos los nuevos selectores CSS están acotados a `.profile-modal`. Se reutilizan tokens, tipografías y superficies existentes.
+
+## Casos de aceptación
+1. Cero o un partido: panel compacto; no se genera un área vacía artificial.
+2. Cinco partidos: filas legibles y sin solaparse.
+3. Veinte/cincuenta partidos: scroll únicamente en `.profile-history-scroll`, último elemento alcanzable.
+4. Antes y después del scroll: geometría del nombre, estadísticas, metodología, título y botón cerrar sin cambio.
+5. En móvil (320, 390), tablet (768) y desktop (1440), Chromium y WebKit: sin overflow horizontal, filas comprimidas o cierre inaccesible.
+6. La vista de partidos y otros modales mantienen sus dimensiones y colores anteriores; no se modifica API, D1 ni autenticación.
+
+## Plan de QA/release
+- Ejecutar `npm ci`, lint, TypeScript, tests y Playwright con capturas comparadas.
+- Revisar preview de Cloudflare en SHA concreto y comprobar con navegador real al menos móvil y desktop.
+- No publicar una versión ni dar por resuelta #77 sin estas verificaciones; coordinar el cambio con la PR de release #85 todavía pendiente.
