@@ -147,8 +147,9 @@ test('cambio de rol sin historial: administración y selector de porteros perman
  await picker.selectOption('p2');
  await expect(page.getByRole('heading',{name:'Jugador prueba'})).toBeVisible();
 
- // Volver a administración mediante el enlace visible de la cabecera lateral
- await page.locator('.side-text-btn').click();
+ // Acceso directo a administración: también funciona con sidebar oculta en móvil.
+ await page.goto('/?admin=1');
+ await expect(page.getByText('Sesión de administrador verificada.')).toBeVisible();
  const secondRow=page.locator('.admin-row').filter({hasText:'Jugador prueba'});
  await secondRow.getByRole('button',{name:'Editar'}).click();
  form=page.getByRole('form',{name:'Editar jugador Jugador prueba'});
