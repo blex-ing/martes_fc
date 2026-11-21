@@ -183,5 +183,5 @@ test('preview manual #77: 30 partidos ficticios, panel con scroll y sin cambios 
  expect(after?.y).toBeCloseTo(before!.y,0);
  expect(titleAfter?.y).toBeCloseTo(title!.y,0);
  expect(requests).toBeGreaterThan(0);
- await expect(page.getByText('Conexión D1 interrumpida')).toBeVisible();
+ await expect(page.locator('.side-info strong')).toHaveText('Conexión D1 interrumpida');
 });
