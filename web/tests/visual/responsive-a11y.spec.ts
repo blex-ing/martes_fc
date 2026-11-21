@@ -159,3 +159,23 @@ test('contraste legible de etiquetas y recuperación ante error de D1',async({pa
  await auditGeometry(page,'Error 503',false);
  await page.screenshot({path:testInfo.outputPath('baseline-review-d1-error.png'),fullPage:true});
 });
+
+test('prefiere movimiento reducido: animaciones y transiciones desactivadas en controles y paneles',async({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await page.goto('/');
+ await expect(page.locator('.hero')).toBeVisible();
+ const properties=await page.evaluate(()=>{
+  const nodes=['.primary-btn.ui-hybrid-control','.hero','.metric.glass','.panel.glass'];
+  return nodes.map(selector=>{
+   const node=document.querySelector<HTMLElement>(selector);
+   if(!node)throw Error('Falta elemento: '+selector);
+   const style=getComputedStyle(node);
+   return {selector,animationName:style.animationName,transitionDuration:style.transitionDuration,scrollBehavior:style.scrollBehavior};
+  });
+ });
+ for(const css of properties){
+  expect(css.animationName,css.selector).toBe('none');
+  expect(css.transitionDuration,css.selector).toBe('0s');
+  expect(css.scrollBehavior,css.selector).toBe('auto');
+ }
+});
