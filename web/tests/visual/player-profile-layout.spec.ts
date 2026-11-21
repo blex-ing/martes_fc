@@ -65,8 +65,27 @@ for(const role of ['Jugador','Portero'] as const){
    const history=dialog.getByRole('region',{name:'Historial de partidos'});
    const rows=history.locator('.match-row');
    await expect(rows).toHaveCount(count);
+   // El viewport de scroll y el grid de filas son nodos distintos.
+   await expect(history.locator('.profile-history-list')).toHaveCount(1);
+   await expect(history.locator('.profile-history-list .match-row')).toHaveCount(count);
+   await expect(dialog.locator('.profile-history-title')).toHaveCSS('display','flex');
+   await expect(history).toHaveCSS('overflow-y','auto');
+   const structure=await history.evaluate(node=>{
+    const list=node.querySelector<HTMLElement>('.profile-history-list')!;
+    const heading=node.parentElement?.querySelector<HTMLElement>('.profile-history-title');
+    const viewport=node.getBoundingClientRect(),title=heading?.getBoundingClientRect();
+    return {display:getComputedStyle(list).display,rows:getComputedStyle(list).gridAutoRows,
+      titledBeforePanel:!!title&&title.bottom<viewport.top,
+      panelBorder:getComputedStyle(node).borderTopWidth};
+   });
+   expect(structure.display).toBe('grid');
+   expect(structure.rows).toBe('max-content');
+   expect(structure.titledBeforePanel).toBe(true);
+   expect(parseFloat(structure.panelBorder)).toBeGreaterThan(0);
    await expect(dialog.getByRole('button',{name:'Cerrar'})).toBeInViewport();
    await expect(dialog.locator('.profile-top')).toBeInViewport();
+   await expect(dialog.locator('.profile-stat-icon svg')).toHaveCount(3);
+   await expect(history.locator('.profile-history-emblem svg')).toHaveCount(count);
    await expect(dialog.locator('.profile-numbers')).toBeInViewport();
    await expect(dialog.locator('.profile-history-title')).toBeInViewport();
    if(role==='Portero')await expect(dialog.locator('.keeper-methodology')).toBeInViewport();
@@ -138,4 +157,49 @@ test('pantalla de 320×568: portero y 50 partidos sin desplazar el modal',async(
  expect(after.modal.scrollTop).toBe(0);
  expect(after.content.scrollTop).toBe(0);
  await page.screenshot({path:testInfo.outputPath('profile-short-height-keeper.png')});
+});
+
+// La ficha de portero usa exactamente el mismo panel, incluyendo navegación por teclado.
+test('historial accesible: foco, teclado y métricas de portero',async({page})=>{
+ const dialog=await openProfile(page,30,'Portero');
+ const heading=dialog.locator('.profile-history-title');
+ const history=dialog.getByRole('region',{name:'Historial de partidos'});
+ const headingId=await heading.getAttribute('id');
+ expect(headingId).toBeTruthy();
+ expect(await history.getAttribute('aria-labelledby')).toBe(headingId);
+ await expect(dialog.locator('.profile-numbers')).toContainText('Paradas');
+ await expect(dialog.locator('.keeper-methodology')).toBeVisible();
+ await expect(history.locator('.match-row')).toHaveCount(30);
+ await expect(history.locator('.match-result').first()).toContainText('paradas');
+ await history.focus();
+ await expect(history).toBeFocused();
+ const before=await history.evaluate(el=>el.scrollTop);
+ await page.keyboard.press('PageDown');
+ await expect.poll(()=>history.evaluate(el=>el.scrollTop)).toBeGreaterThan(before);
+ await expect(dialog.locator('.profile-top')).toBeInViewport();
+ await expect(heading).toBeInViewport();
+ await page.keyboard.press('End');
+ // La tecla End debe alcanzar el límite real del panel, no desplazar el documento.
+ await expect.poll(()=>history.evaluate(el=>el.scrollTop)).toBeGreaterThan(before);
+ await expect.poll(()=>history.evaluate(el=>Math.abs(el.scrollHeight-el.clientHeight-el.scrollTop))).toBeLessThanOrEqual(2);
+ await expect(history.locator('.match-row').last()).toBeInViewport();
+ await expect(history).toBeFocused();
+ await expect(heading).toBeInViewport();
+ await page.keyboard.press('Home');
+ await expect.poll(()=>history.evaluate(el=>el.scrollTop)).toBeLessThanOrEqual(1);
+ await expect(history.locator('.match-row').first()).toBeInViewport();
+ await expect(dialog.locator('.profile-top')).toBeInViewport();
+ await page.keyboard.press('End');
+ await expect(history.locator('.match-row').last()).toBeInViewport();
+ await page.keyboard.press('Escape');
+ await expect(dialog).toHaveCount(0);
+});
+
+test('ningún query param de demo abre un perfil ficticio',async({page})=>{
+ await page.route('**/api/public/snapshot',route=>route.fulfill({
+  status:503,contentType:'application/json',body:'{"code":"database_unavailable"}'
+ }));
+ await page.goto('/?previewHistory=1');
+ await expect(page.getByRole('dialog',{name:'Ficha del jugador'})).toHaveCount(0);
+ await expect(page.getByText('Ander (DEMO)')).toHaveCount(0);
 });
