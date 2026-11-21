@@ -179,6 +179,17 @@ test('historial accesible: foco, teclado y métricas de portero',async({page})=>
  await expect(dialog.locator('.profile-top')).toBeInViewport();
  await expect(heading).toBeInViewport();
  await page.keyboard.press('End');
+ // La tecla End debe alcanzar el límite real del panel, no desplazar el documento.
+ await expect.poll(()=>history.evaluate(el=>el.scrollTop)).toBeGreaterThan(before);
+ await expect.poll(()=>history.evaluate(el=>Math.abs(el.scrollHeight-el.clientHeight-el.scrollTop))).toBeLessThanOrEqual(2);
+ await expect(history.locator('.match-row').last()).toBeInViewport();
+ await expect(history).toBeFocused();
+ await expect(heading).toBeInViewport();
+ await page.keyboard.press('Home');
+ await expect.poll(()=>history.evaluate(el=>el.scrollTop)).toBeLessThanOrEqual(1);
+ await expect(history.locator('.match-row').first()).toBeInViewport();
+ await expect(dialog.locator('.profile-top')).toBeInViewport();
+ await page.keyboard.press('End');
  await expect(history.locator('.match-row').last()).toBeInViewport();
  await page.keyboard.press('Escape');
  await expect(dialog).toHaveCount(0);
