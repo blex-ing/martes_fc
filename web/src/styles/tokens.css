@@ -46,4 +46,30 @@
  --match-vs-color:#60708e;
  --match-colon-color:#687693;
  --recent-form-label:#9aaac5;
+ /* Valores de referencia de la ficha aprobada; no cambiar geometría o estética. */
+ --profile-avatar-outline:rgba(60,223,245,.5);
+ --profile-avatar-highlight:rgba(255,255,255,.14);
+ --profile-accent-halo:rgba(36,230,250,.10);
+ --profile-accent-outline:rgba(36,230,250,.25);
+ --profile-role-text:#a1f2ff;
+ --profile-stat-outline:rgba(158,175,237,.28);
+ --profile-stat-surface-start:rgba(30,67,95,.42);
+ --profile-stat-surface-end:rgba(51,35,88,.36);
+ --profile-stat-highlight:rgba(255,255,255,.055);
+ --profile-stat-icon-outline:rgba(166,189,236,.10);
+ --profile-stat-icon-surface:rgba(86,153,221,.13);
+ --profile-history-surface-start:rgba(27,46,78,.48);
+ --profile-history-surface-end:rgba(34,26,72,.45);
+ --profile-history-outline:rgba(151,179,231,.24);
+ --profile-scroll-thumb:#8067da;
+ --profile-scroll-track:rgba(104,123,168,.15);
+ --profile-row-surface:rgba(19,29,57,.72);
+ --profile-emblem-text:#e8f8ff;
+ --profile-emblem-glow:rgba(36,230,250,.18);
+ --profile-row-highlight:rgba(255,255,255,.035);
+ --profile-victory-surface:rgba(93,226,161,.12);
+ --profile-defeat-surface:rgba(255,114,143,.12);
+ --profile-draw-surface:rgba(255,207,119,.12);
+ --profile-shield-surface:rgba(26,48,83,.46);
+ --profile-shield-inner-line:rgba(234,246,255,.14);
 }
